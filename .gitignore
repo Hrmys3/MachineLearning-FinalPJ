@@ -1,0 +1,47 @@
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Local environments and secrets
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Downloaded datasets and generated caches
+/data/*
+
+# Keep reproducible experiment configuration
+!/data/lift_act/
+/data/lift_act/*
+!/data/lift_act/splits.json
+!/data/lift_act/act_source_commit.txt
+!/data/lift_act/stats_train_20.json
+!/data/lift_act/stats_train_50.json
+
+# Generated results, videos, and checkpoints
+/outputs/
+*.pt
+*.pth
+*.ckpt
+
+# Runtime logs
+*.log
+
+# Temporary files and editor backups
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# Native crash dumps
+core
+core.*
+*.core
+
+# Downloaded upstream ACT repository
+/third_party/act/
