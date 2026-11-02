@@ -1,0 +1,10 @@
+{
+  "baseline_source_commit": "d38b73cef5b87cc06250c979d544d9702e1f6fc5",
+  "layout_changes": "uncommitted repository reorganization; record resulting commit after review",
+  "act_source_commit": "742c753c0d4a5d87076c8f69e5628c79a8cc5488",
+  "checkpoint_path": "outputs/act_lift20_candidate/checkpoint.pt",
+  "checkpoint_sha256": "3732458e0391ce32c1d3298f1408d0eeeeefce83ceb51164f40e9c160b2b3241",
+  "checkpoint_bytes": 87693107,
+  "published": false,
+  "dataset_revision_locked": false
+}

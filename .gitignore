@@ -45,3 +45,6 @@ core.*
 
 # Downloaded upstream ACT repository
 /third_party/act/
+
+# Earlier document snapshots
+*.previous

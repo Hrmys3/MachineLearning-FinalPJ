@@ -1,0 +1,29 @@
+{
+  "train_demos": 20,
+  "train_seed": 42,
+  "updates": 2000,
+  "batch_size": 8,
+  "state_fields": [
+    "eef_pos_3",
+    "eef_quat_xyzw_4",
+    "gripper_qpos_2"
+  ],
+  "action_dim": 7,
+  "camera_names": [
+    "agentview",
+    "robot0_eye_in_hand"
+  ],
+  "image_size": [
+    128,
+    128
+  ],
+  "chunk_size": 20,
+  "execution_horizon": 5,
+  "control_freq": 20,
+  "rollout_steps": 100,
+  "controller": "OSC_POSE",
+  "input_ref_frame": "world",
+  "lite_physics": false,
+  "checkpoint_selection": "last_update",
+  "temporal_aggregation": false
+}

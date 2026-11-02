@@ -1,0 +1,20 @@
+{
+  "validation_episode": 109,
+  "steps": 100,
+  "success_any": true,
+  "success_final": true,
+  "first_success_step": 39,
+  "image_flips": {
+    "agentview": true,
+    "robot0_eye_in_hand": true
+  },
+  "execution_horizon": 5,
+  "max_native_success_streak_steps": 27,
+  "max_native_success_streak_seconds": 1.35,
+  "stable_native_success_10_steps": true,
+  "first_stable_success_confirmation_step": 48,
+  "first_native_failure_after_success": 66,
+  "peak_cube_height": 1.020128637513886,
+  "peak_cube_height_step": 57,
+  "first_negative_gripper_command_after_peak": 58
+}
