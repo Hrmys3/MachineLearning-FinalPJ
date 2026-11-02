@@ -23,24 +23,24 @@ third_party/      # 上游代码及适配副本
 
 详细说明见 [仓库结构](docs/REPOSITORY_LAYOUT.md)。
 
-## 运行环境
+## 环境要求
 
-使用 Linux 或 WSL2 Ubuntu，并在独立 Python 环境中安装依赖。核心版本组合为：
+- **操作系统**：Linux；Windows 使用 WSL2 Ubuntu。已验证的发行版为 Ubuntu 22.04，其他系统组合需要单独验证。
+- **Python**：3.11，使用独立的 Python 环境；环境名称可自行选择。
+- **GPU**：训练和 ACT 推理脚本直接使用 CUDA，需要可被 PyTorch 访问的 NVIDIA GPU，以及匹配的驱动和 CUDA 版 PyTorch。
+- **深度学习框架**：配套的 PyTorch 与 torchvision。已验证版本为 PyTorch 2.14.1+cu130、torchvision 0.29.1+cu130。
+- **仿真依赖**：robosuite 1.5.1、MuJoCo 3.3.0、Mink 0.0.13。
+- **数值与数据工具**：NumPy、SciPy、h5py、PyArrow、OpenCV、Pillow、huggingface_hub、IPython；已验证的 NumPy 版本为 2.4.6。
+- **图形支持**：相机测试与闭环评测需要可用的 OpenGL 渲染环境。示例命令使用 GLFW，需要可用的显示连接；无显示服务器需自行准备兼容的离屏后端。
+- **开发工具**：Git，以及用于运行示例命令的 Linux Shell。
 
-- Python 3.11
-- robosuite 1.5.1
-- MuJoCo 3.3.0
-- Mink 0.0.13
-- 相互匹配的 PyTorch 和 torchvision
+更多说明见 [环境要求](env/README.md)。`env/snapshots/` 是历史依赖记录，不是经过验证的可移植锁文件。
 
-环境说明见 [env/README.md](env/README.md)。`env/snapshots/` 中的文件是历史依赖快照，可能包含本机路径，不应直接作为通用安装清单。
+## 运行位置
 
-以下命令均从项目根目录执行。环境名和项目路径可按实际情况替换：
+以下命令均在**克隆后的仓库根目录**执行，即包含 `README.md`、`scripts/`、`data/` 和 `third_party/` 的目录。仓库可以放在任意位置，不依赖特定用户名、绝对路径或 Conda 环境名。执行命令前，应确保当前 `python` 属于已满足上述要求的环境。
 
-```bash
-conda activate ml
-cd ~/ml/pj-arm
-```
+文中的 `data/...`、`outputs/...` 和 `third_party/...` 均为相对于仓库根目录的路径。
 
 ## 基础检查
 
@@ -61,10 +61,9 @@ ACT_PRETRAINED=0 python scripts/checks/test_act_model.py
 - [社区 RoboMimic PH 数据](https://huggingface.co/datasets/chaoqi-liu/robomimic_mt4_ph)：图像、状态、动作与轨迹索引。
 - [官方 RoboMimic 数据](https://huggingface.co/datasets/robomimic/robomimic_datasets)：环境配置、模型与仿真状态。
 
-安装下载工具后获取数据：
+使用环境中已有的 `huggingface_hub` 获取数据：
 
 ```bash
-python -m pip install huggingface_hub
 python - <<'PY'
 from huggingface_hub import snapshot_download, hf_hub_download
 
