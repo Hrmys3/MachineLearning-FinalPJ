@@ -12,4 +12,6 @@
 `results/` and `process_status.json` are copies of actual evaluation records.
 Full CSV/GIF evidence remains in ignored `outputs/act_valid100/`.
 `artifact_manifest.json` records the original baseline commit and model hash;
-the repository reorganization itself has not been committed or published.
+the repository reorganization was committed as `47a4b16`. It did not retrain the
+model or change these results. Model weights and full evaluation attachments have
+not been published as downloadable resources.

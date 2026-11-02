@@ -1,3 +1,5 @@
+> **本项目说明**：此目录是为 Lift 适配的 ACT 源码副本，下面保留的是上游说明。上游的 ALOHA、双臂任务、Python 3.8、MuJoCo 2.3.7 安装命令和示例指标，不是本项目的环境要求或 Lift 实验结果。请从仓库根目录的 [README](../../README.md) 和 [环境要求](../../env/README.md) 开始，使用 `scripts/train/` 与 `scripts/eval/` 中的入口。本项目使用 9 维状态、7 维动作，保留第三方许可证与来源说明。
+
 # ACT: Action Chunking with Transformers
 
 ### *New*: [ACT tuning tips](https://docs.google.com/document/d/1FVIZfoALXg_ZkYKaYVh-qOlaXveq5CtvJHXkY25eYhs/edit?usp=sharing)

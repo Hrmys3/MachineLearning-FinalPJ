@@ -14,13 +14,14 @@ Training uses RoboMimic Lift proficient-human demonstrations, obtained through
 `chaoqi-liu/robomimic_mt4_ph` (community conversion) and official source metadata
 from `robomimic/robomimic_datasets`, `v1.5/lift/ph/demo_v15.hdf5`.
 See upstream dataset cards for attribution and licensing. Original training
-videos and demonstration datasets are not redistributed in this release.
+videos and demonstration datasets are not included in the ordinary Git repository.
 
 ## Visual initialization
 
 ResNet18 ImageNet initialization is provided by torchvision, downloaded from
 https://download.pytorch.org/models/resnet18-f37072fd.pth .
-The released checkpoint contains the resulting trained model parameters.
+The locally saved checkpoint contains the resulting trained model parameters.
+No checkpoint download has been published by this project.
 
 ## Simulation dependencies
 

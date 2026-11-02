@@ -14,8 +14,8 @@ unchanged. Do not rename or move `data/`, `outputs/` or `third_party/` independe
 | scripts/tools | ACT source adaptation |
 | experiments/lift20_baseline | Small, version-controlled result snapshot |
 | env/snapshots | Historical dependency records |
-| docs | Project documentation |
-| archive | Historical helpers and earlier documents |
+| docs | Repository structure documentation |
+| archive | Historical helpers; local backups may be ignored |
 | outputs/logs | Existing top-level logs, moved without changing their contents |
 
 Old root-level Python entry points have moved; no compatibility wrappers are added.
@@ -23,3 +23,15 @@ The batch validation runner calls `scripts/eval/eval_act_one.py`.
 Checkpoint/data/result directories have not moved. No new training or evaluation
 is performed by this restructuring. Current outputs still correspond to the
 pre-reorganization baseline; the manifest records that source commit.
+
+## What an ordinary clone contains
+
+Source code, the adapted ACT implementation, fixed splits/statistics, and the small
+baseline records under `experiments/lift20_baseline/` are tracked. Downloaded
+demonstrations, episode caches, checkpoints, logs, CSV traces and GIFs are ignored.
+The original `third_party/act/` checkout is optional and ignored; the adapted
+`third_party/act_lift/` copy is tracked. Model assets have not been published.
+
+The upstream ACT README is retained for attribution and reference; its installation
+commands and task examples are not this project's Lift instructions. Start with
+the root README and `env/README.md`.
