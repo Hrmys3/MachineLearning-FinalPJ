@@ -10,7 +10,7 @@ import json
 import csv
 import sys
 from argparse import Namespace
-from lift_protocol import FirstLiftMetric, HoldController, parse_args, experiment_config
+from lift_protocol import FirstLiftMetric, HoldController, parse_args, experiment_config, evaluation_ids
 from pathlib import Path
 
 import h5py
@@ -36,8 +36,8 @@ def decode(value):
 
 def main(args=None):
     args = args or parse_args()
-    splits = json.loads((BASE / "splits.json").read_text())
-    episode_id = splits["valid"][args.index]
+    episode_id = evaluation_ids(args)[args.index]
+    settings = args.settings["eval"]
     output = args.output / f"episode_{episode_id:04d}"
     # 在模型加载和仿真之前拒绝复用目录，也保留失败运行证据。
     output.mkdir(parents=True, exist_ok=False)
@@ -53,24 +53,34 @@ def main(args=None):
     model.load_state_dict(ckpt["model"])
     model.eval()
     stats = ckpt["stats"]
-
-    mapping = [
-        json.loads(line)
-        for line in Path(
-            "data/robomimic_mt4_ph/meta/robomimic_source_episodes.jsonl"
-        ).read_text().splitlines()
-        if line.strip()
-    ]
-    entry = next(r for r in mapping if r["episode_index"] == episode_id)
+    if ckpt["camera_names"] != CAMERAS:
+        raise ValueError("checkpoint相机顺序不匹配")
+    config["prediction_horizon"] = ckpt["model_args"]["num_queries"]
+    config["inference_image_size"] = ckpt["image_size"]
+    config["training_seed"] = ckpt.get("training_seed", config["training_seed"])
+    (output / "config.json").write_text(json.dumps(config, indent=2))
 
     env = None
     try:
-        with h5py.File(SOURCE, "r") as f:
-            metadata = json.loads(decode(f["data"].attrs["env_args"]))
-            demo = f["data"][entry["source_demo_key"]]
-            initial_state = demo["states"][0]
-            xml = decode(demo.attrs["model_file"])
-
+        if args.initial_states == "random":
+            with h5py.File(args.settings["random_set"]["path"]) as f:
+                metadata = json.loads(decode(f.attrs["env_args"]))
+                initial_state = f["states"][episode_id]
+                xml = decode(f.attrs["model_xml"])
+        else:
+            mapping = [
+                json.loads(line)
+                for line in Path(
+                    "data/robomimic_mt4_ph/meta/robomimic_source_episodes.jsonl"
+                ).read_text().splitlines()
+                if line.strip()
+            ]
+            entry = next(r for r in mapping if r["episode_index"] == episode_id)
+            with h5py.File(SOURCE, "r") as f:
+                metadata = json.loads(decode(f["data"].attrs["env_args"]))
+                demo = f["data"][entry["source_demo_key"]]
+                initial_state = demo["states"][0]
+                xml = decode(demo.attrs["model_file"])
         kwargs = metadata["env_kwargs"].copy()
         kwargs.update(
             has_renderer=False,
@@ -95,26 +105,27 @@ def main(args=None):
         env._update_observables(force=True)
         obs = env._get_observations()
 
-        # 与同一示范的缓存首帧比较，确认每路相机的翻转约定。
-        flips = {}
-        with h5py.File(
-            BASE / "episodes" / f"episode_{episode_id:04d}.hdf5", "r"
-        ) as f:
-            for camera in CAMERAS:
-                recorded = f[f"images/{camera}"][0].astype(np.float32)
-                raw = obs[f"{camera}_image"]
-                errors = [
-                    np.mean((raw.astype(np.float32) - recorded) ** 2),
-                    np.mean(
-                        (np.flipud(raw).astype(np.float32) - recorded) ** 2
-                    ),
-                ]
-                flips[camera] = bool(errors[1] < errors[0])
-                print(camera, "raw/flipped MSE:", errors,
-                      "flip:", flips[camera], flush=True)
-
-            expected_state = f["state"][0]
-
+        flips = {camera: True for camera in CAMERAS}
+        expected_state = None
+        if args.initial_states == "valid":
+            # 与同一示范的缓存首帧比较，确认每路相机的翻转约定。
+            flips = {}
+            with h5py.File(
+                BASE / "episodes" / f"episode_{episode_id:04d}.hdf5", "r"
+            ) as f:
+                for camera in CAMERAS:
+                    recorded = f[f"images/{camera}"][0].astype(np.float32)
+                    raw = obs[f"{camera}_image"]
+                    errors = [
+                        np.mean((raw.astype(np.float32) - recorded) ** 2),
+                        np.mean(
+                            (np.flipud(raw).astype(np.float32) - recorded) ** 2
+                        ),
+                    ]
+                    flips[camera] = bool(errors[1] < errors[0])
+                    print(camera, "raw/flipped MSE:", errors,
+                          "flip:", flips[camera], flush=True)
+                expected_state = f["state"][0]
         def state_vector(observation):
             return np.concatenate([
                 observation["robot0_eef_pos"],
@@ -122,8 +133,10 @@ def main(args=None):
                 observation["robot0_gripper_qpos"],
             ])
 
-        print("Initial state max difference:",
-              np.max(np.abs(state_vector(obs) - expected_state)))
+        if expected_state is not None:
+            print("Initial state max difference:", np.max(np.abs(state_vector(obs) - expected_state)))
+        if not np.allclose(env.sim.get_state().flatten(), initial_state, atol=1e-10, rtol=0):
+            raise ValueError("恢复后的仿真状态不匹配")
 
         def image_array(observation, camera):
             image = observation[f"{camera}_image"]
@@ -138,7 +151,7 @@ def main(args=None):
             ])
             images = torch.from_numpy(images).permute(0, 3, 1, 2).float() / 255
             images = F.interpolate(
-                images, (128, 128), mode="bilinear", align_corners=False
+                images, tuple(ckpt["image_size"]), mode="bilinear", align_corners=False
             )
             mean = torch.tensor([0.485, 0.456, 0.406])[None, :, None, None]
             std = torch.tensor([0.229, 0.224, 0.225])[None, :, None, None]
@@ -157,8 +170,12 @@ def main(args=None):
             assert np.isfinite(actions).all()
             return np.clip(actions, -1, 1)
 
-        metric = FirstLiftMetric()
-        hold = HoldController() if args.policy == "act_hold" else None
+        horizon = settings["execution_horizon"]
+        if horizon > ckpt["model_args"]["num_queries"]:
+            raise ValueError("执行长度不能超过checkpoint预测长度")
+        metric = FirstLiftMetric(settings["metric_confirmation_steps"], settings["metric_hold_seconds"])
+        hold = HoldController(settings["hold_position_gain"], settings["hold_rotation_gain"]) if args.policy == "act_hold" else None
+        trigger_streak = 0
         hold_start_step = None
         frames = [Image.fromarray(image_array(obs, "agentview"))]
         trace = []
@@ -173,9 +190,9 @@ def main(args=None):
         step = 0
 
         while step < args.steps:
-            chunk = predict(obs) if hold_start_step is None else np.zeros((5, 7))
+            chunk = predict(obs) if hold_start_step is None else np.zeros((horizon, 7))
             chunk_id += 1
-            for chunk_offset, action in enumerate(chunk[:min(5, args.steps - step)]):
+            for chunk_offset, action in enumerate(chunk[:min(horizon, args.steps - step)]):
                 action_source = "act"
                 if hold_start_step is not None:
                     action = hold.action(obs)
@@ -188,7 +205,9 @@ def main(args=None):
                 step += 1
                 success = bool(env._check_success())
                 metric.update(success)
-                if hold is not None and hold_start_step is None and metric.start is not None:
+                trigger_height = env.model.mujoco_arena.table_offset[2] + settings["hold_trigger_height"]
+                trigger_streak = trigger_streak + 1 if obs["cube_pos"][2] > trigger_height else 0
+                if hold is not None and hold_start_step is None and trigger_streak >= settings["hold_trigger_steps"]:
                     hold.activate(obs, env.robots[0].part_controllers["right"])
                     hold_start_step = step + 1  # 第一条规则动作在下一步执行
 
@@ -301,13 +320,15 @@ def main(args=None):
             "hold_rule_start_step": hold_start_step if hold_start_step is not None and hold_start_step <= step else None,
             "hold_target_position": hold.position.tolist() if hold is not None and hold.position is not None else None,
             "hold_target_quaternion_xyzw": hold.quaternion.tolist() if hold is not None and hold.position is not None else None,
-            "validation_episode": episode_id,
+            "episode_id": episode_id,
+            "initial_states": args.initial_states,
+            **({"validation_episode": episode_id} if args.initial_states == "valid" else {}),
             "steps": step,
             "success_any": bool(success_any),
             "success_final": bool(env._check_success()),
             "first_success_step": first_success,
             "image_flips": flips,
-            "execution_horizon": 5,
+            "execution_horizon": horizon,
             "max_native_success_streak_steps": max_success_streak,
             "max_native_success_streak_seconds": max_success_streak / 20,
             "stable_native_success_10_steps": max_success_streak >= 10,

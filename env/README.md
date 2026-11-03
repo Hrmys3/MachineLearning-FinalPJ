@@ -19,6 +19,7 @@
 | 数值计算 | numpy 2.4.6、SciPy及仿真所需的Numba等依赖 |
 | 数据文件 | h5py、PyArrow、huggingface_hub |
 | 图像与视频 | OpenCV、Pillow |
+| 配置解析 | PyYAML 6.0.3 |
 | 上游辅助导入 | IPython |
 | 命令行工具 | Git、Linux Shell |
 

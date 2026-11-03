@@ -30,7 +30,7 @@ third_party/      # 上游代码及适配副本
 - **GPU**：训练和 ACT 推理脚本直接使用 CUDA，需要可被 PyTorch 访问的 NVIDIA GPU，以及匹配的驱动和 CUDA 版 PyTorch。
 - **深度学习框架**：配套的 PyTorch 与 torchvision。已验证版本为 PyTorch 2.14.1+cu130、torchvision 0.29.1+cu130。
 - **仿真依赖**：robosuite 1.5.1、MuJoCo 3.3.0、Mink 0.0.13。
-- **数值与数据工具**：NumPy、SciPy、h5py、PyArrow、OpenCV、Pillow、huggingface_hub、IPython；已验证的 NumPy 版本为 2.4.6。
+- **数值与数据工具**：NumPy、SciPy、h5py、PyArrow、PyYAML、OpenCV、Pillow、huggingface_hub、IPython；已验证的 NumPy 版本为 2.4.6。
 - **图形支持**：相机测试与闭环评测需要可用的 OpenGL 渲染环境。示例命令使用 GLFW，需要可用的显示连接；无显示服务器需自行准备兼容的离屏后端。
 - **开发工具**：Git，以及用于运行示例命令的 Linux Shell。
 
@@ -120,9 +120,9 @@ ACT_PRETRAINED=0 python scripts/train/train_act_smoke.py
 ACT_PRETRAINED=1 python scripts/train/train_act_lift20.py
 ```
 
-`ACT_PRETRAINED=1` 在创建模型时加载 ImageNet 视觉骨干权重；`0` 表示不加载该初始化。训练参数和输出目录见对应脚本。
+`ACT_PRETRAINED=1` 在创建模型时加载 ImageNet 视觉骨干权重；`0` 表示不加载该初始化。训练参数和输出目录统一在 `configs/lift.yaml`，也可通过 `--config configs/your_experiment.yaml` 指定配置副本。
 
-训练脚本可能覆盖配置中的权重输出。开始新实验前，应区分实验目录并保存已有模型。
+训练入口拒绝复用已有输出目录；修改配置中的 `train.output` 开始独立实验。已有基线 checkpoint 不会被覆盖。
 
 ## 推理与评测
 
@@ -132,7 +132,7 @@ ACT_PRETRAINED=1 python scripts/train/train_act_lift20.py
 outputs/act_lift20_candidate/checkpoint.pt
 ```
 
-此外还需要社区数据元信息、相关轨迹缓存，以及官方源文件：
+建立随机初态集需要官方源文件；使用旧验证示范初态时另需社区数据元信息及对应轨迹缓存。官方源文件：
 
 ```text
 data/robomimic_source/v1.5/lift/ph/demo_v15.hdf5
@@ -140,7 +140,28 @@ data/robomimic_source/v1.5/lift/ph/demo_v15.hdf5
 
 权重和大体积数据不随普通 Git 仓库提供。运行前需准备对应资源，并按上述路径放置。
 
-单初态推理、批量验证与动画总览：
+统一修改 [configs/lift.yaml](configs/lift.yaml) 中的参数：
+
+| 配置分组 | 可调整内容 |
+| --- | --- |
+| `random_set` | 固定随机初态数量 `count`、主种子 `seed`、数据集路径 `path` |
+| `eval` | 总步数 `steps`、执行长度 `execution_horizon`、策略 `policy`、初始化来源 `initial_states`、checkpoint、保持触发高度/连续步数、位姿反馈增益、评价确认步数/保持秒数 |
+| `model` | 预测长度 `chunk_size`、Transformer维度/层数/注意力头、骨干、dropout、输入图像尺寸；用于下一次训练 |
+| `train` | 示范预算20/50、种子、更新次数、batch size、学习率、骨干学习率、权重衰减、KL权重、梯度裁剪、预训练与独立输出目录 |
+
+模型结构和输入图像尺寸在推理时读取 checkpoint，修改配置的 `model` 不会改造已有模型。训练预算自动对应相应划分和统计量。PH数据的20Hz控制频率固定；时间集成目前未实现。命令行的 `--policy`、`--steps`、`--checkpoint`、`--initial-states` 可覆盖配置。批量运行开始时将实际配置冻结为实验目录的 `parameters.yaml`，后续编辑原配置不会影响已启动的子进程。读取器仍兼容旧实验的可信 `.py` 配置快照；正在运行并读取 `parameters.py` 的旧任务可继续完成。
+
+默认使用100个固定随机开发初态。初次准备：
+
+```bash
+python scripts/data/prepare_random_lift_states.py --config configs/lift.yaml
+```
+
+数据集保存完整模型XML、逐轮仿真状态和采样种子，并校验每个初态可准确恢复；不执行策略或筛掉困难样本。主种子确定一个固定模型，随后使用原生Lift reset采样方块xy位置、yaw和机器人初始化噪声；这是固定几何条件下的开发评测，不等同于所有模型尺寸/场景的泛化或独立最终测试。数据和同名JSON清单位于 `random_set.path`；清单的小型记录见 `experiments/random_dev100/`。数据文件不随普通Git提供，重复生成会拒绝覆盖；调整数量/种子时必须使用新路径建立新版本。
+
+随机初态评测不依赖对应示范缓存，双相机采用已验证的上下翻转、RGB和checkpoint输入尺寸约定。恢复时核对完整仿真状态，运行前核对数据集SHA256、数量和种子。旧20个验证示范初态仍可通过 `--initial-states valid` 使用，并保留缓存首帧图像方向核对。
+
+单初态推理、批量开发评测与动画总览：
 
 ```bash
 MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/eval/eval_act_logged.py --output outputs/act_single_v2
@@ -151,7 +172,7 @@ python scripts/eval/make_eval_grid.py --input outputs/act_valid_v2 --output outp
 
 推理时设置 `ACT_PRETRAINED=0` 是为避免重复下载初始化权重，之后仍会加载 checkpoint 中的完整模型参数。
 
-评测必须通过 `--output` 指定新实验目录。批量入口拒绝已有实验目录，单轮入口拒绝已有逐轮目录；包括失败运行在内均不自动覆盖。默认 `--policy act` 为纯 ACT，`--steps 100`，`--index 0` 为单轮使用的验证集索引。
+评测必须通过 `--output` 指定新实验目录。批量入口拒绝已有实验目录，单轮入口拒绝已有逐轮目录；包括失败运行在内均不自动覆盖。默认配置为纯 ACT、100步、100个随机开发初态；`--index 0` 为单轮在所选初态集中的索引。旧验证集使用 `--initial-states valid`。
 
 启用额外保持规则：
 
@@ -159,13 +180,13 @@ python scripts/eval/make_eval_grid.py --input outputs/act_valid_v2 --output outp
 MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/eval/run_act_validation.py --policy act_hold --output outputs/act_hold_valid_v1
 ```
 
-`act_hold` 连续10步满足原生高度条件后，从下一步开始固定当前末端世界系位姿，并持续发送夹爪闭合命令；使用 OSC_POSE 当前缩放生成位置/旋转反馈增量，不直接锁定关节。切换依赖仿真物体高度真值，切换后不返回 ACT，必须标为“ACT＋保持控制器”。规则效果需要闭环实测，不能视作模型学会保持。
+`act_hold` 默认连续10步满足配置高度条件后，从下一步开始固定当前末端世界系位姿，并持续发送夹爪闭合命令；使用 OSC_POSE 当前缩放生成位置/旋转反馈增量，不直接锁定关节。`eval.hold_trigger_height` 为方块中心相对桌面的高度差，默认0.04米；只改变规则切换时机，原生成功高度仍固定为0.04米。切换依赖仿真物体高度真值，切换后不返回 ACT，必须标为“ACT＋保持控制器”。规则效果需要闭环实测，不能视作模型学会保持。
 
-两种策略均新增 `first_lift_hold_2s_success`：首次连续10步确认的抬升回溯到起点，累计连续40步（20Hz下约2秒）原生高度达标。确认时间计入40步，首次高度条件中断后重抓不抵消失败；达标40步之后的掉落不撤销已完成的2秒保持，但仍记录首次高度条件中断与最终成功。该指标只衡量高度保持，不证明稳定接触。100步内第61步为最后一个能完整观察40步的起点；更晚起点若未观察满，记为 `insufficient_window`，主成功率仍计失败，不删除分母。
+两种策略均记录通用 `first_lift_hold_success`；默认2秒时同时保留 `first_lift_hold_2s_success`：首次连续10步确认的抬升回溯到起点，累计连续40步（20Hz下约2秒）原生高度达标。确认时间计入40步，首次高度条件中断后重抓不抵消失败；达标40步之后的掉落不撤销已完成的2秒保持，但仍记录首次高度条件中断与最终成功。评价确认步数和保持秒数由 `eval.metric_confirmation_steps`、`eval.metric_hold_seconds` 控制；修改后应显式记录协议，指标字段不再冒称2秒。该指标只衡量高度保持，不证明稳定接触。100步内第61步为最后一个能完整观察40步的起点；更晚起点若未观察满，记为 `insufficient_window`，主成功率仍计失败，不删除分母。
 
-每轮 `episode_XXXX/` 保存 `config.json`、`steps.csv`、`result.json`、`rollout.gif`，CSV 的 `action_source` 标注 ACT 或规则动作。批量实验根目录保存逐轮 `.log`、`config.json`、`process_status.json` 和实时更新的 `metrics.json`；汇总成功率以全部预定初态为分母，未完成与异常轮次不计成功，并单独报告。配置记录 checkpoint SHA256、代码提交与工作区状态、数据划分校验值、训练种子和评测协议。配置同时保存评测源码文本快照，以便追溯尚未提交的代码；训练种子仅对校验值匹配的已知基线记录为42，未知 checkpoint 记为 null。
+每轮 `episode_XXXX/` 保存 `config.json`、`steps.csv`、`result.json`、`rollout.gif`，CSV 的 `action_source` 标注 ACT 或规则动作。批量实验根目录保存逐轮 `.log`、`config.json`、`process_status.json` 和实时更新的 `metrics.json`；汇总成功率以全部预定初态为分母，未完成与异常轮次不计成功，并单独报告。配置记录 checkpoint SHA256、代码提交与工作区状态、数据划分校验值、训练种子和评测协议。配置同时保存评测源码文本快照，以便追溯尚未提交的代码；训练种子读取checkpoint记录；旧checkpoint仅对校验值匹配的已知基线记录为42，其余缺少记录时为null。
 
-批量推理全部结束后自动按本次实验的初态顺序，每20轮生成一份4行×5列同步动画，保存在实验目录的 `grid_001.gif`、`grid_002.gif` 等。最后一组不足20轮保留空格，失败或缺失轮次在原位标记 `MISSING/FAILED`；较短动画结束后保持末帧。标签 `H`、`S`、`F` 分别表示首次抬升保持2秒、连续10步和最终成功，旧结果缺少H时显示 `-`。拼接不改变评测数据，拒绝覆盖已有总览。
+批量推理全部结束后自动按本次实验的初态顺序，每20轮生成一份4行×5列同步动画，保存在实验目录的 `grid_001.gif`、`grid_002.gif` 等。最后一组不足20轮保留空格，失败或缺失轮次在原位标记 `MISSING/FAILED`；较短动画结束后保持末帧。标签 `H`、`S`、`F` 分别表示首次抬升保持配置时长、连续10步和最终成功，旧结果缺少H时显示 `-`。拼接不改变评测数据，拒绝覆盖已有总览。
 
 已有实验可手动拼接，无需重新推理：
 

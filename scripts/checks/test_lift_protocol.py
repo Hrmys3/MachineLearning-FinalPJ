@@ -13,6 +13,17 @@ class FirstLiftTests(unittest.TestCase):
             metric.update(value)
         return metric.result()
 
+    def test_configurable_confirmation_and_hold_duration(self):
+        metric = FirstLiftMetric(confirmation_steps=3, hold_seconds=1.0)
+        for _ in range(19):
+            metric.update(True)
+        self.assertFalse(metric.result()["first_lift_hold_success"])
+        metric.update(True)
+        result = metric.result()
+        self.assertTrue(result["first_lift_hold_success"])
+        self.assertEqual(result["first_lift_confirmation_step"], 3)
+        self.assertNotIn("first_lift_hold_2s_success", result)
+
     def test_boundary_and_window(self):
         r = self.evaluate([False] * 61 + [True] * 39)
         self.assertEqual(r["first_lift_step"], 62)

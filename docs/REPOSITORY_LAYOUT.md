@@ -7,9 +7,11 @@ unchanged. Do not rename or move `data/`, `outputs/` or `third_party/` independe
 | Directory | Role |
 | --- | --- |
 | scripts/checks | Physics, camera and model smoke checks |
-| scripts/data | Source replay, inspection, splitting, caching |
+| scripts/data | Source replay, inspection, splitting, caching, fixed random initial states |
 | scripts/train | Smoke and PH20 candidate training |
-| scripts/eval | Single rollout, logs, batch validation, GIF grid |
+| scripts/eval | Single rollout, logs, batch development evaluation, GIF grid |
+| configs/lift.yaml | Shared editable training, model and evaluation parameters |
+| experiments/random_dev100 | Small manifest of the frozen random development set |
 | scripts/experts | Scripted and aligned experts, historical self-collection |
 | scripts/tools | ACT source adaptation |
 | experiments/lift20_baseline | Small, version-controlled result snapshot |
@@ -20,6 +22,10 @@ unchanged. Do not rename or move `data/`, `outputs/` or `third_party/` independe
 
 Old root-level Python entry points have moved; no compatibility wrappers are added.
 The batch validation runner calls `scripts/eval/eval_act_one.py`.
+Evaluation defaults to the frozen 100-state random development set;
+`--initial-states valid` selects the original 20 demonstration states.
+Generate random states with `scripts/data/prepare_random_lift_states.py`.
+Training and evaluation both accept `--config` (default `configs/lift.yaml`).
 Single and batch evaluation now require `--output` with a new experiment directory.
 `eval_act_logged.py` shares the single-rollout implementation; `lift_protocol.py`
 contains the optional `--policy act_hold` controller and first-lift hold metric.

@@ -41,7 +41,7 @@ def render_group(root, episode_ids, output):
                     frames.append(gif.convert("RGB").resize((SIZE, SIZE), Image.Resampling.LANCZOS))
                     elapsed += max(1, int(gif.info.get("duration", FRAME_MS)))
                     end_times.append(elapsed)
-            hold = result.get("first_lift_hold_2s_success")
+            hold = result.get("first_lift_hold_success", result.get("first_lift_hold_2s_success"))
             stable = result.get("stable_native_success_10_steps", False)
             final = result.get("success_final", False)
             label = f"ep {episode_id:03d} H={'-' if hold is None else int(hold)} S={int(stable)} F={int(final)}"
