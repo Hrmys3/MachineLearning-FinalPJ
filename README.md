@@ -12,6 +12,7 @@ scripts/
 ├── eval/         # 推理、评测与可视化
 ├── experts/      # 脚本专家与示范采集
 └── tools/        # ACT 源码适配工具
+configs/          # 统一YAML参数配置
 experiments/      # 实验配置与小型结果记录
 docs/             # 项目文档
 env/              # 环境说明与依赖快照
@@ -147,9 +148,11 @@ data/robomimic_source/v1.5/lift/ph/demo_v15.hdf5
 | `random_set` | 固定随机初态数量 `count`、主种子 `seed`、数据集路径 `path` |
 | `eval` | 总步数 `steps`、执行长度 `execution_horizon`、策略 `policy`、初始化来源 `initial_states`、checkpoint、保持触发高度/连续步数、位姿反馈增益、评价确认步数/保持秒数 |
 | `model` | 预测长度 `chunk_size`、Transformer维度/层数/注意力头、骨干、dropout、输入图像尺寸；用于下一次训练 |
-| `train` | 示范预算20/50、种子、更新次数、batch size、学习率、骨干学习率、权重衰减、KL权重、梯度裁剪、预训练与独立输出目录 |
+| `train` | 示范预算20/50、种子、更新次数、batch size、学习率、损失权重、预训练、缓存/数据加载与独立输出目录 |
+| `performance` | 阶段计时、可选CUDA事件、硬件采样、训练Profiler与CPU线程数 |
+| `video` | 单轮GIF保存、保存帧间隔和自动总览；不改变模型观测或控制频率 |
 
-模型结构和输入图像尺寸在推理时读取 checkpoint，修改配置的 `model` 不会改造已有模型。训练预算自动对应相应划分和统计量。PH数据的20Hz控制频率固定；时间集成目前未实现。命令行的 `--policy`、`--steps`、`--checkpoint`、`--initial-states` 可覆盖配置。批量运行开始时将实际配置冻结为实验目录的 `parameters.yaml`，后续编辑原配置不会影响已启动的子进程。读取器仍兼容旧实验的可信 `.py` 配置快照；正在运行并读取 `parameters.py` 的旧任务可继续完成。
+模型结构和输入图像尺寸在推理时读取 checkpoint，修改配置的 `model` 不会改造已有模型。训练预算自动对应相应划分和统计量。PH数据的20Hz控制频率固定；时间集成目前未实现。命令行的 `--policy`、`--steps`、`--checkpoint`、`--initial-states` 可覆盖配置。批量运行开始时将实际配置冻结为实验目录的 `parameters.yaml`，后续编辑原配置不会影响已启动的子进程。读取器仍兼容旧实验的可信 `.py` 配置快照；分析历史实验时以其冻结配置和源码快照为准，不用当前YAML替代当时参数。
 
 默认使用100个固定随机开发初态。初次准备：
 
@@ -164,10 +167,10 @@ python scripts/data/prepare_random_lift_states.py --config configs/lift.yaml
 单初态推理、批量开发评测与动画总览：
 
 ```bash
-MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/eval/eval_act_logged.py --output outputs/act_single_v2
-python scripts/eval/run_act_validation.py --output outputs/act_valid_v2
+MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/eval/eval_act_logged.py --output outputs/act_random_single_v2
+python scripts/eval/run_act_validation.py --output outputs/act_random100_v2
 # 已完成的实验可单独拼接；若批量入口已自动生成，则不必重复执行
-python scripts/eval/make_eval_grid.py --input outputs/act_valid_v2 --output outputs/act_valid_v2_grid.gif
+python scripts/eval/make_eval_grid.py --input outputs/act_random100_v2 --output outputs/act_random100_v2_grid.gif
 ```
 
 推理时设置 `ACT_PRETRAINED=0` 是为避免重复下载初始化权重，之后仍会加载 checkpoint 中的完整模型参数。
@@ -177,14 +180,25 @@ python scripts/eval/make_eval_grid.py --input outputs/act_valid_v2 --output outp
 启用额外保持规则：
 
 ```bash
-MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/eval/run_act_validation.py --policy act_hold --output outputs/act_hold_valid_v1
+MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/eval/run_act_validation.py --policy act_hold --output outputs/act_hold_random100_v2
 ```
 
-`act_hold` 默认连续10步满足配置高度条件后，从下一步开始固定当前末端世界系位姿，并持续发送夹爪闭合命令；使用 OSC_POSE 当前缩放生成位置/旋转反馈增量，不直接锁定关节。`eval.hold_trigger_height` 为方块中心相对桌面的高度差，默认0.04米；只改变规则切换时机，原生成功高度仍固定为0.04米。切换依赖仿真物体高度真值，切换后不返回 ACT，必须标为“ACT＋保持控制器”。规则效果需要闭环实测，不能视作模型学会保持。
+`act_hold` 默认连续10步满足配置高度条件后，从下一步开始固定当前末端世界系位姿，并持续发送夹爪闭合命令；使用 OSC_POSE 当前缩放生成位置/旋转反馈增量，不直接锁定关节。`eval.hold_trigger_height` 为方块中心相对桌面的高度差，默认0.04米；只改变规则切换时机，原生成功高度仍固定为0.04米。切换依赖仿真物体高度真值，切换后不返回 ACT，必须标为“ACT＋保持控制器”。持续闭合不保证夹持牢固；抬升后掉落也需检查夹持姿态和滑动，不能一律归因为主动松手。规则结果不能视作纯ACT学会保持。
 
 两种策略均记录通用 `first_lift_hold_success`；默认2秒时同时保留 `first_lift_hold_2s_success`：首次连续10步确认的抬升回溯到起点，累计连续40步（20Hz下约2秒）原生高度达标。确认时间计入40步，首次高度条件中断后重抓不抵消失败；达标40步之后的掉落不撤销已完成的2秒保持，但仍记录首次高度条件中断与最终成功。评价确认步数和保持秒数由 `eval.metric_confirmation_steps`、`eval.metric_hold_seconds` 控制；修改后应显式记录协议，指标字段不再冒称2秒。该指标只衡量高度保持，不证明稳定接触。100步内第61步为最后一个能完整观察40步的起点；更晚起点若未观察满，记为 `insufficient_window`，主成功率仍计失败，不删除分母。
 
-每轮 `episode_XXXX/` 保存 `config.json`、`steps.csv`、`result.json`、`rollout.gif`，CSV 的 `action_source` 标注 ACT 或规则动作。批量实验根目录保存逐轮 `.log`、`config.json`、`process_status.json` 和实时更新的 `metrics.json`；汇总成功率以全部预定初态为分母，未完成与异常轮次不计成功，并单独报告。配置记录 checkpoint SHA256、代码提交与工作区状态、数据划分校验值、训练种子和评测协议。配置同时保存评测源码文本快照，以便追溯尚未提交的代码；训练种子读取checkpoint记录；旧checkpoint仅对校验值匹配的已知基线记录为42，其余缺少记录时为null。
+每轮 `episode_XXXX/` 保存 `config.json`、`steps.csv`、`result.json` 和 `performance.json`，启用视频保存时另有 `rollout.gif`；CSV 的 `action_source` 标注 ACT 或规则动作。批量实验根目录保存日志、`config.json`、`process_status.json`、`metrics.json` 和性能汇总；汇总成功率以全部预定初态为分母，未完成与异常轮次不计成功，并单独报告。配置记录 checkpoint SHA256、代码提交与工作区状态、数据划分校验值、训练种子和评测协议。配置同时保存评测源码文本快照，以便追溯尚未提交的代码；训练种子读取checkpoint记录；旧checkpoint仅对校验值匹配的已知基线记录为42，其余缺少记录时为null。
+
+查看某次实验汇总与进程状态（将目录替换为实际输出目录）：
+
+```bash
+python -m json.tool outputs/act_hold_random100_v2/metrics.json
+python -m json.tool outputs/act_hold_random100_v2/process_status.json
+```
+
+`metrics.json` 的 `n`、`attempted`、`completed` 分别为计划、已尝试、正常完成轮数；`process_failures` 为未正常完成的轮数，`worker_failures` 为异常worker数，`counts`、`rates` 为各指标成功数和成功率。复用模型时，同组先完成的有效结果不会因后续轮次崩溃而被丢弃；日志路径记录在 `process_status.json` 的 `worker_log` 中。汇总在worker结束后更新，多轮复用时不一定每轮结束就立即刷新。运行中成功率仍以全部计划轮数为分母，等所有轮次结束后再作为最终结果使用。
+
+`hold_status_counts` 区分成功、首次确认后高度条件中断、观察窗口不足和未确认抬升。`insufficient_window` 表示尚未观察满要求时长，不等于已发生掉落；即使 `success_final` 为真也不能补算保持成功。`no_confirmed_lift` 不自动等于抓空，应继续查看 `success_any`、高度、夹爪及视频。不同策略应使用同一组初态作配对比较；不同初态集上的百分比不能直接解释为优化收益。
 
 批量推理全部结束后自动按本次实验的初态顺序，每20轮生成一份4行×5列同步动画，保存在实验目录的 `grid_001.gif`、`grid_002.gif` 等。最后一组不足20轮保留空格，失败或缺失轮次在原位标记 `MISSING/FAILED`；较短动画结束后保持末帧。标签 `H`、`S`、`F` 分别表示首次抬升保持配置时长、连续10步和最终成功，旧结果缺少H时显示 `-`。拼接不改变评测数据，拒绝覆盖已有总览。
 
@@ -200,7 +214,47 @@ python scripts/eval/make_eval_grid.py --input outputs/act_hold_valid_v1
 
 ```bash
 python scripts/checks/test_lift_protocol.py
+python scripts/checks/test_project_config.py
 ```
+
+## 性能测量与加速
+
+速度选项也在 `configs/lift.yaml`：训练支持内存缓存、DataLoader预取、固定页内存、异步传输、混合精度；评测支持有限轮次模型复用、多worker、inference_mode和视频保存开关。默认仍为FP32、逐轮进程隔离及完整视频，计时单独输出为 `performance.json`，不修改成功指标。编译为实验选项，效果需要另测。
+
+正式训练/评测直接运行原入口，不经过测速脚本。可先在现有YAML分组中修改以下字段（其余训练与评测参数保留）：
+
+```yaml
+train:
+  output: outputs/act_lift20_cached_v1  # 新目录；使用缓存前确认内存充足
+  cache_mode: processed_ram
+  num_workers: 0                      # 内存缓存不与多worker同时开启
+  pin_memory: true
+  non_blocking_transfer: true
+  precision: fp32
+
+eval:
+  precision: fp32
+  episodes_per_worker: 5              # 复用模型；每轮仍重建环境
+  num_workers: 1                      # 可单独比较2；复用＋并行组合需另测
+  episode_limit: null                 # 正式随机开发评测使用全部100初态
+
+video:
+  save_rollout: true
+  auto_make_grids: true
+```
+
+训练运行 `ACT_PRETRAINED=1 python scripts/train/train_act_lift20.py`；评测运行 `MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/eval/run_act_validation.py --policy act_hold --output outputs/act_hold_optimized_v1`。评测checkpoint路径仍须指向希望评价的实际模型；纯ACT使用 `--policy act`。以上配置示例没有自动修改默认值，混合精度和编译需单独核对效果。
+
+自动对照使用相同任务、独立输出与交替顺序：
+
+```bash
+ACT_PRETRAINED=0 python scripts/tools/benchmark_speed.py --kind train --variants baseline,cache,workers --updates 200 --repeats 3 --output outputs/speed_train_v1
+MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/tools/benchmark_speed.py --kind eval --policy act_hold --variants baseline,reuse --episodes 10 --repeats 3 --no-video --output outputs/speed_eval_check_v1
+```
+
+测速专用的方案、重复次数、更新数、初态数量和输出目录仍在命令行指定，不写入统一YAML；测速脚本会为各方案生成实际配置，不能用当前YAML推断测速时的最终参数。
+
+查看各测速目录的 `comparison.json`；速度比是“基线总耗时中位数÷该方案总耗时中位数”，大于1表示更快。1.276倍对应约21.6%的耗时减少，不能把两者混用。同时核对完成情况、训练实际更新数与验证误差、推理配对指标及动作差异；总耗时包含启动和输出，不等于纯模型前向时间。`--no-video` 对两侧共同关闭保存，仍保留双相机观测和全部仿真步数。对并行方案同时报告批量吞吐和单轮延迟，重叠阶段的累计时间不能直接相加。重复同一批初态用于测速度稳定性，不会增加独立初态数量。可先小规模测速，再用100初态验证正确性。选项、硬件监控、计时含义及限制见 [性能对照说明](docs/PERFORMANCE.md)。
 
 ## 文件管理
 
