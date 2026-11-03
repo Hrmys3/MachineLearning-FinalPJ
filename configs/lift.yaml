@@ -19,6 +19,12 @@ eval:
   hold_position_gain: 1.0
   hold_rotation_gain: 1.0
   checkpoint: outputs/act_lift20_candidate/checkpoint.pt
+  precision: fp32           # amp_fp16 / amp_bf16需另验证成功率
+  inference_mode: false
+  compile_model: false      # opt-in，首次编译开销计入总时间
+  num_workers: 1            # 同时运行的GPU评测worker，先比较1与2
+  episodes_per_worker: 1    # >1复用模型；环境每轮重建，定期重启隔离故障
+  episode_limit: null       # 测速可取前N个固定初态，不改变冻结集本身
 model:
   chunk_size: 20
   hidden_dim: 256
@@ -43,3 +49,24 @@ train:
   gradient_clip: 1.0
   pretrained_backbone: true  # ACT_PRETRAINED环境变量可覆盖
   output: outputs/act_lift20_config_v1  # 必须是新目录
+  num_workers: 0
+  pin_memory: false
+  persistent_workers: false
+  prefetch_factor: 2
+  cache_mode: none          # none / raw_ram / processed_ram；缓存模式要求worker=0
+  non_blocking_transfer: false
+  precision: fp32
+  compile_model: false
+performance:
+  torch_threads: null       # CPU预处理线程；A/B用相同设置，避免过度线程竞争
+  timing_enabled: true
+  cuda_events: false        # 详细GPU事件计时有额外开销，A/B使用相同设置
+  hardware_monitor_enabled: false
+  hardware_sample_seconds: 1.0
+  warmup_updates: 20        # 只从稳定训练速度统计排除，不跳过训练
+  profiler_enabled: false
+  profiler_active_steps: 5
+video:
+  save_rollout: true
+  frame_stride: 1           # 只抽取保存帧，不改变图像观测/20Hz/100步
+  auto_make_grids: true

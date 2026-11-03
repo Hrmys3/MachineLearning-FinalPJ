@@ -101,6 +101,7 @@ def parse_args(batch=False):
     parser.add_argument("--checkpoint", type=Path, default=None)
     parser.add_argument("--steps", type=int)
     if not batch:
+        parser.add_argument("--worker-indices", help="内部：同一worker顺序评测的索引列表")
         parser.add_argument("--index", type=int, default=int(os.environ.get("EVAL_INDEX", "0")))
     args = parser.parse_args()
     args.settings = load_config(args.config)
@@ -134,7 +135,7 @@ def experiment_config(args):
         "splits_sha256": hashlib.sha256(Path("data/lift_act/splits.json").read_bytes()).hexdigest(),
         "training_seed": 42 if digest.hexdigest() == "3732458e0391ce32c1d3298f1408d0eeeeefce83ceb51164f40e9c160b2b3241" else None,
         "evaluation_source_snapshot": {
-            str(path): path.read_text() for path in sorted([*Path("scripts/eval").glob("*.py"), Path("scripts/project_config.py")])
+            str(path): path.read_text() for path in sorted([*Path("scripts/eval").glob("*.py"), Path("scripts/project_config.py"), Path("scripts/performance.py")])
         },
         "control_freq": args.settings["eval"]["control_freq"],
         "prediction_horizon": "from checkpoint model_args.num_queries",

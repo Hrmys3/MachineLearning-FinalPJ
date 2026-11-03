@@ -13,7 +13,8 @@ unchanged. Do not rename or move `data/`, `outputs/` or `third_party/` independe
 | configs/lift.yaml | Shared editable training, model and evaluation parameters |
 | experiments/random_dev100 | Small manifest of the frozen random development set |
 | scripts/experts | Scripted and aligned experts, historical self-collection |
-| scripts/tools | ACT source adaptation |
+| scripts/tools | ACT adaptation, speed benchmarks and hardware monitoring |
+| scripts/performance.py | Shared wall/CUDA timing and optional hardware sampling |
 | experiments/lift20_baseline | Small, version-controlled result snapshot |
 | env/snapshots | Historical dependency records |
 | docs | Repository structure documentation |

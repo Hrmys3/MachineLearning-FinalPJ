@@ -6,6 +6,9 @@ _PROJECT_ROOT = _ProjectPath(__file__).resolve().parents[2]
 _project_os.chdir(_PROJECT_ROOT)
 """单个验证初态的 ACT / ACT＋规则保持闭环评测。"""
 
+import time
+_SCRIPT_STARTED = time.perf_counter()
+
 import json
 import csv
 import sys
@@ -19,6 +22,8 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 import robosuite as suite
+from performance import Timings, precision_context, runtime_info
+from rollout_video import save_rollout_gif
 
 root = Path("third_party/act_lift").resolve()
 sys.path.insert(0, str(root))
@@ -34,7 +39,25 @@ def decode(value):
     return value.decode() if isinstance(value, bytes) else value
 
 
-def main(args=None):
+class PolicyRuntime:
+    def __init__(self, args):
+        started = time.perf_counter()
+        perf = args.settings["performance"]
+        if perf.get("torch_threads") is not None:
+            torch.set_num_threads(perf["torch_threads"])
+        self.ckpt = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
+        model = build_ACT_model(Namespace(**self.ckpt["model_args"])).cuda()
+        model.load_state_dict(self.ckpt["model"])
+        model.eval()
+        self.model = torch.compile(model) if args.settings["eval"]["compile_model"] else model
+        self.mean = torch.tensor([0.485, 0.456, 0.406])[None, :, None, None]
+        self.std = torch.tensor([0.229, 0.224, 0.225])[None, :, None, None]
+        torch.cuda.synchronize()
+        self.load_seconds = time.perf_counter() - started
+
+
+def main(args=None, runtime=None):
+    episode_started = time.perf_counter()
     args = args or parse_args()
     episode_id = evaluation_ids(args)[args.index]
     settings = args.settings["eval"]
@@ -43,15 +66,11 @@ def main(args=None):
     output.mkdir(parents=True, exist_ok=False)
     config = experiment_config(args)
     (output / "config.json").write_text(json.dumps(config, indent=2))
-    # checkpoint 是我们自己生成的可信本地文件。
-    ckpt = torch.load(
-        args.checkpoint,
-        map_location="cpu",
-        weights_only=False,
-    )
-    model = build_ACT_model(Namespace(**ckpt["model_args"])).cuda()
-    model.load_state_dict(ckpt["model"])
-    model.eval()
+    perf = args.settings["performance"]
+    timings = Timings(perf["timing_enabled"], perf["cuda_events"])
+    loaded_here = runtime is None
+    runtime = runtime or PolicyRuntime(args)
+    ckpt, model = runtime.ckpt, runtime.model
     stats = ckpt["stats"]
     if ckpt["camera_names"] != CAMERAS:
         raise ValueError("checkpoint相机顺序不匹配")
@@ -61,6 +80,7 @@ def main(args=None):
     (output / "config.json").write_text(json.dumps(config, indent=2))
 
     env = None
+    environment_started = time.perf_counter()
     try:
         if args.initial_states == "random":
             with h5py.File(args.settings["random_set"]["path"]) as f:
@@ -138,6 +158,9 @@ def main(args=None):
         if not np.allclose(env.sim.get_state().flatten(), initial_state, atol=1e-10, rtol=0):
             raise ValueError("恢复后的仿真状态不匹配")
 
+        if timings.enabled:
+            timings.wall["environment_setup"].append(time.perf_counter() - environment_started)
+
         def image_array(observation, camera):
             image = observation[f"{camera}_image"]
             return np.flipud(image).copy() if flips[camera] else image.copy()
@@ -153,16 +176,17 @@ def main(args=None):
             images = F.interpolate(
                 images, tuple(ckpt["image_size"]), mode="bilinear", align_corners=False
             )
-            mean = torch.tensor([0.485, 0.456, 0.406])[None, :, None, None]
-            std = torch.tensor([0.229, 0.224, 0.225])[None, :, None, None]
+            mean, std = runtime.mean, runtime.std
             images = ((images - mean) / std).unsqueeze(0).cuda()
             state = torch.tensor(
                 state, dtype=torch.float32, device="cuda"
             ).unsqueeze(0)
 
-            with torch.no_grad():
+            grad_context = torch.inference_mode if settings["inference_mode"] else torch.no_grad
+            with timings.stage("model_forward", gpu=True), grad_context(), precision_context(settings["precision"]):
                 prediction, _, _ = model(state, images, None)
-            actions = prediction[0].cpu().numpy()
+            with timings.stage("action_to_cpu"):
+                actions = prediction[0].float().cpu().numpy()
             actions = (
                 actions * np.asarray(stats["action_std"])
                 + np.asarray(stats["action_mean"])
@@ -177,7 +201,10 @@ def main(args=None):
         hold = HoldController(settings["hold_position_gain"], settings["hold_rotation_gain"]) if args.policy == "act_hold" else None
         trigger_streak = 0
         hold_start_step = None
-        frames = [Image.fromarray(image_array(obs, "agentview"))]
+        video = args.settings["video"]
+        frames = [Image.fromarray(image_array(obs, "agentview"))] if video["save_rollout"] else []
+        frame_steps = [0] if frames else []
+        rollout_started = time.perf_counter()
         trace = []
         success_streak = 0
         max_success_streak = 0
@@ -190,7 +217,8 @@ def main(args=None):
         step = 0
 
         while step < args.steps:
-            chunk = predict(obs) if hold_start_step is None else np.zeros((horizon, 7))
+            with timings.stage("policy_predict_total"):
+                chunk = predict(obs) if hold_start_step is None else np.zeros((horizon, 7))
             chunk_id += 1
             for chunk_offset, action in enumerate(chunk[:min(horizon, args.steps - step)]):
                 action_source = "act"
@@ -201,7 +229,8 @@ def main(args=None):
                 before_eef = obs["robot0_eef_pos"].copy()
                 before_cube = obs["cube_pos"].copy()
                 before_gripper = obs["robot0_gripper_qpos"].copy()
-                obs, reward, done, info = env.step(action)
+                with timings.stage("env_step_including_render"):
+                    obs, reward, done, info = env.step(action)
                 step += 1
                 success = bool(env._check_success())
                 metric.update(success)
@@ -278,14 +307,15 @@ def main(args=None):
                 success_any |= success
                 if success and first_success is None:
                     first_success = step
-                frames.append(Image.fromarray(
-                    image_array(obs, "agentview")
-                ))
+                if video["save_rollout"] and (step % video["frame_stride"] == 0 or step == args.steps):
+                    frames.append(Image.fromarray(image_array(obs, "agentview")))
+                    frame_steps.append(step)
 
             if step % 20 == 0:
                 print("step:", step, "success:", success,
                       "cube_z:", float(obs["cube_pos"][2]), flush=True)
 
+        rollout_seconds = time.perf_counter() - rollout_started
         with (output / "steps.csv").open(
             "w", newline="", encoding="utf-8"
         ) as f:
@@ -307,13 +337,9 @@ def main(args=None):
             None,
         )
 
-        frames[0].save(
-            output / "rollout.gif",
-            save_all=True,
-            append_images=frames[1:],
-            duration=50,
-            loop=0,
-        )
+        if frames:
+            with timings.stage("gif_encoding"):
+                save_rollout_gif(frames, frame_steps, output / "rollout.gif")
         result = {
             **metric.result(),
             "policy": args.policy,
@@ -341,12 +367,44 @@ def main(args=None):
         }
         (output / "result.json").write_text(json.dumps(result, indent=2))
         print(json.dumps(result, indent=2))
-        print("GIF:", (output / "rollout.gif").resolve())
+        if frames:
+            print("GIF:", (output / "rollout.gif").resolve())
+        with timings.stage("environment_close"):
+            env.close()
+            env = None
+        report = {**timings.report(), **runtime_info(), "kind": "episode",
+                  "parameters": args.settings,
+                  "episode_id": episode_id, "memory_peak_scope": "worker lifetime", "model_loaded_here": loaded_here,
+                  "model_load_seconds": runtime.load_seconds if loaded_here else 0.0,
+                  "rollout_seconds": rollout_seconds, "steps": step,
+                  "sim_steps_per_second": step / rollout_seconds,
+                  "episode_wall_seconds": time.perf_counter() - episode_started}
+        (output / "performance.json").write_text(json.dumps(report, indent=2))
+        return runtime
 
     finally:
         if env is not None:
             env.close()
 
 
+def run_worker():
+    import traceback
+    args = parse_args()
+    indices = [int(i) for i in args.worker_indices.split(",")] if args.worker_indices else [args.index]
+    runtime = None
+    failed = False
+    # worker日志由批量父进程保存，Python异常逐轮记录后继续；底层崩溃由父进程处理。
+    for index in indices:
+        args.index = index
+        try:
+            runtime = main(args, runtime)
+        except Exception:
+            failed = True
+            traceback.print_exc()
+            runtime = None
+    if failed:
+        raise SystemExit(1)
+
+
 if __name__ == "__main__":
-    main()
+    run_worker()
