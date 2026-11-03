@@ -20,6 +20,16 @@ unchanged. Do not rename or move `data/`, `outputs/` or `third_party/` independe
 
 Old root-level Python entry points have moved; no compatibility wrappers are added.
 The batch validation runner calls `scripts/eval/eval_act_one.py`.
+Single and batch evaluation now require `--output` with a new experiment directory.
+`eval_act_logged.py` shares the single-rollout implementation; `lift_protocol.py`
+contains the optional `--policy act_hold` controller and first-lift hold metric.
+The optional controller uses simulator object-height truth to trigger holding;
+its results must be reported separately from pure ACT. Batch `metrics.json` and
+`process_status.json` summarize all scheduled initial states, including failures.
+The batch runner automatically produces `grid_001.gif`, etc., grouping every
+20 scheduled episodes into a 4-by-5 grid. Missing rollouts retain their slots.
+`make_eval_grid.py --input <experiment>` also works independently.
+See the root README for commands and the precise metric definition.
 Checkpoint/data/result directories have not moved. No new training or evaluation
 is performed by this restructuring. Current outputs still correspond to the
 pre-reorganization baseline; the manifest records that source commit.

@@ -1,129 +1,104 @@
-"""将验证集 20 份 GIF 合成 4 行 × 5 列的同步动画。"""
-
-# Resolve project-relative paths from the repository root.
-import os as _project_os
-from pathlib import Path as _ProjectPath
-_PROJECT_ROOT = _ProjectPath(__file__).resolve().parents[2]
-_project_os.chdir(_PROJECT_ROOT)
-
+"""将本次实验按每20轮合成4行×5列同步GIF，不足20轮保留空格。"""
+import argparse
 import bisect
 import json
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-ROOT = Path("outputs/act_valid100")
-OUTPUT = Path("outputs/act_valid100_grid.gif")
+ROWS, COLS = 4, 5
+SIZE, LABEL_HEIGHT, FRAME_MS = 192, 30, 50
 
-ROWS = 4
-COLS = 5
-SIZE = 192
-LABEL_HEIGHT = 30
-FRAME_MS = 50  # 输出 20 FPS
 
-splits = json.loads(Path("data/lift_act/splits.json").read_text())
-episode_ids = splits["valid"]
-assert len(episode_ids) == ROWS * COLS
+def episode_order(root):
+    """优先使用本次实验的计划顺序，保留缺失/失败轮次的位置。"""
+    config_path = root / "config.json"
+    if config_path.exists():
+        config = json.loads(config_path.read_text())
+        if "episode_ids" in config:
+            return config["episode_ids"]
+    status_path = root / "process_status.json"
+    if status_path.exists():
+        return [s["episode_id"] for s in json.loads(status_path.read_text())]
+    return [int(p.name.removeprefix("episode_")) for p in sorted(root.glob("episode_*"))
+            if p.is_dir() and p.name.removeprefix("episode_").isdigit()]
 
-font_path = Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
-font = (
-    ImageFont.truetype(str(font_path), 13)
-    if font_path.exists()
-    else ImageFont.load_default()
-)
 
-clips = []
+def render_group(root, episode_ids, output):
+    font_path = Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
+    font = ImageFont.truetype(str(font_path), 13) if font_path.exists() else ImageFont.load_default()
+    clips = []
+    for episode_id in episode_ids:
+        directory = root / f"episode_{episode_id:04d}"
+        frames, end_times, elapsed = [], [], 0
+        label = f"ep {episode_id:03d} MISSING/FAILED"
+        color = (230, 80, 70)
+        try:
+            result = json.loads((directory / "result.json").read_text())
+            with Image.open(directory / "rollout.gif") as gif:
+                for i in range(gif.n_frames):
+                    gif.seek(i)
+                    frames.append(gif.convert("RGB").resize((SIZE, SIZE), Image.Resampling.LANCZOS))
+                    elapsed += max(1, int(gif.info.get("duration", FRAME_MS)))
+                    end_times.append(elapsed)
+            hold = result.get("first_lift_hold_2s_success")
+            stable = result.get("stable_native_success_10_steps", False)
+            final = result.get("success_final", False)
+            label = f"ep {episode_id:03d} H={'-' if hold is None else int(hold)} S={int(stable)} F={int(final)}"
+            color = (40, 180, 80) if final else (220, 150, 40) if stable else color
+        except (OSError, ValueError, EOFError) as exc:
+            # 保留原位，不将后面的成功样本挪到失败位置。
+            print(f"episode={episode_id}: {exc}", flush=True)
+            frames, end_times, elapsed = [], [], 0
+        clips.append((frames, end_times, elapsed, label, color))
 
-for episode_id in episode_ids:
-    directory = ROOT / f"episode_{episode_id:04d}"
-    gif_path = directory / "rollout.gif"
-    result = json.loads((directory / "result.json").read_text())
+    total_ms = max(FRAME_MS, max(clip[2] for clip in clips))
+    output_frames = []
+    for time_ms in range(0, total_ms, FRAME_MS):
+        canvas = Image.new("RGB", (COLS * SIZE, ROWS * (SIZE + LABEL_HEIGHT)), (20, 20, 20))
+        draw = ImageDraw.Draw(canvas)
+        for index, (frames, end_times, _, label, color) in enumerate(clips):
+            row, col = divmod(index, COLS)
+            x, y = col * SIZE, row * (SIZE + LABEL_HEIGHT)
+            if frames:
+                frame_index = min(bisect.bisect_right(end_times, time_ms), len(frames) - 1)
+                canvas.paste(frames[frame_index], (x, y + LABEL_HEIGHT))
+            draw.text((x + 5, y + 7), label, fill=color, font=font)
+        output_frames.append(canvas)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output_frames[0].save(output, save_all=True, append_images=output_frames[1:],
+                          duration=FRAME_MS, loop=0, optimize=False, disposal=2)
+    print("GIF:", output.resolve(), flush=True)
 
-    frames = []
-    end_times = []
-    elapsed = 0
 
-    with Image.open(gif_path) as gif:
-        for i in range(gif.n_frames):
-            gif.seek(i)
-            # Pillow 解码 GIF 的当前合成画面，再复制为独立 RGB 帧。
-            frame = gif.convert("RGB").resize(
-                (SIZE, SIZE), Image.Resampling.LANCZOS
-            )
-            duration = int(gif.info.get("duration", FRAME_MS))
-            duration = duration if duration > 0 else FRAME_MS
+def make_grids(root, output=None):
+    root = Path(root)
+    episode_ids = episode_order(root)
+    if not episode_ids:
+        raise ValueError(f"{root} 中没有本次实验的 episode 记录")
+    groups = [episode_ids[i:i + ROWS * COLS] for i in range(0, len(episode_ids), ROWS * COLS)]
+    if output is None:
+        paths = [root / f"grid_{i + 1:03d}.gif" for i in range(len(groups))]
+    else:
+        output = Path(output)
+        paths = [output] if len(groups) == 1 else [
+            output.with_name(f"{output.stem}_{i + 1:03d}{output.suffix}") for i in range(len(groups))]
+    # 一次性检查所有目标，避免部分写入后才发现后面的文件已存在。
+    for path in paths:
+        if path.exists():
+            raise FileExistsError(f"{path} 已存在，不覆盖已有动画")
+    for group, path in zip(groups, paths):
+        render_group(root, group, path)
+    return paths
 
-            frames.append(frame)
-            elapsed += duration
-            end_times.append(elapsed)
 
-    stable = bool(result["stable_native_success_10_steps"])
-    final = bool(result["success_final"])
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--input", type=Path, required=True, help="本次实验目录")
+    parser.add_argument("--output", type=Path, help="可选输出文件名；多组自动附加_001等编号")
+    args = parser.parse_args()
+    make_grids(args.input, args.output)
 
-    clips.append({
-        "episode": episode_id,
-        "frames": frames,
-        "end_times": end_times,
-        "duration": elapsed,
-        "label": (
-            f"ep {episode_id:03d}  "
-            f"stable={'Y' if stable else 'N'} "
-            f"final={'Y' if final else 'N'}"
-        ),
-        "color": (
-            (40, 180, 80) if final
-            else (220, 150, 40) if stable
-            else (210, 60, 60)
-        ),
-    })
-    print(
-        f"episode={episode_id}, frames={len(frames)}, "
-        f"duration={elapsed / 1000:.2f}s"
-    )
 
-total_ms = max(clip["duration"] for clip in clips)
-width = COLS * SIZE
-height = ROWS * (SIZE + LABEL_HEIGHT)
-output_frames = []
-
-for time_ms in range(0, total_ms, FRAME_MS):
-    canvas = Image.new("RGB", (width, height), (20, 20, 20))
-    draw = ImageDraw.Draw(canvas)
-
-    for index, clip in enumerate(clips):
-        row, col = divmod(index, COLS)
-        x = col * SIZE
-        y = row * (SIZE + LABEL_HEIGHT)
-
-        # 较短动画播放结束后保持末帧，不单独循环。
-        frame_index = min(
-            bisect.bisect_right(clip["end_times"], time_ms),
-            len(clip["frames"]) - 1,
-        )
-        canvas.paste(clip["frames"][frame_index], (x, y + LABEL_HEIGHT))
-        draw.text(
-            (x + 5, y + 7),
-            clip["label"],
-            fill=clip["color"],
-            font=font,
-        )
-
-    output_frames.append(canvas)
-
-OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-output_frames[0].save(
-    OUTPUT,
-    save_all=True,
-    append_images=output_frames[1:],
-    duration=FRAME_MS,
-    loop=0,
-    optimize=False,
-    disposal=2,
-)
-
-with Image.open(OUTPUT) as gif:
-    print("Saved frames:", gif.n_frames)
-
-print("Layout:", ROWS, "rows ×", COLS, "columns")
-print("Resolution:", width, "×", height)
-print("Output:", OUTPUT.resolve())
+if __name__ == "__main__":
+    main()

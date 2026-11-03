@@ -4,16 +4,15 @@ import os as _project_os
 from pathlib import Path as _ProjectPath
 _PROJECT_ROOT = _ProjectPath(__file__).resolve().parents[2]
 _project_os.chdir(_PROJECT_ROOT)
-import os
-"""单个验证初态的 ACT 闭环调试；不作为正式成功率结果。"""
+"""单个验证初态的 ACT / ACT＋规则保持闭环评测。"""
 
 import json
 import csv
 import sys
 from argparse import Namespace
+from lift_protocol import FirstLiftMetric, HoldController, parse_args, experiment_config
 from pathlib import Path
 
-import cv2
 import h5py
 import numpy as np
 import torch
@@ -35,10 +34,18 @@ def decode(value):
     return value.decode() if isinstance(value, bytes) else value
 
 
-def main():
+def main(args=None):
+    args = args or parse_args()
+    splits = json.loads((BASE / "splits.json").read_text())
+    episode_id = splits["valid"][args.index]
+    output = args.output / f"episode_{episode_id:04d}"
+    # 在模型加载和仿真之前拒绝复用目录，也保留失败运行证据。
+    output.mkdir(parents=True, exist_ok=False)
+    config = experiment_config(args)
+    (output / "config.json").write_text(json.dumps(config, indent=2))
     # checkpoint 是我们自己生成的可信本地文件。
     ckpt = torch.load(
-        "outputs/act_lift20_candidate/checkpoint.pt",
+        args.checkpoint,
         map_location="cpu",
         weights_only=False,
     )
@@ -47,8 +54,6 @@ def main():
     model.eval()
     stats = ckpt["stats"]
 
-    splits = json.loads((BASE / "splits.json").read_text())
-    episode_id = splits["valid"][int(os.environ.get("EVAL_INDEX", "0"))]
     mapping = [
         json.loads(line)
         for line in Path(
@@ -75,7 +80,8 @@ def main():
             camera_heights=256,
             camera_widths=256,
             lite_physics=False,
-            horizon=250,
+            horizon=max(250, args.steps + 1),
+            control_freq=20,
         )
         env = suite.make(metadata["env_name"], **kwargs)
         env.reset()
@@ -151,6 +157,9 @@ def main():
             assert np.isfinite(actions).all()
             return np.clip(actions, -1, 1)
 
+        metric = FirstLiftMetric()
+        hold = HoldController() if args.policy == "act_hold" else None
+        hold_start_step = None
         frames = [Image.fromarray(image_array(obs, "agentview"))]
         trace = []
         success_streak = 0
@@ -163,16 +172,26 @@ def main():
         first_success = None
         step = 0
 
-        while step < 100:
-            chunk = predict(obs)
+        while step < args.steps:
+            chunk = predict(obs) if hold_start_step is None else np.zeros((5, 7))
             chunk_id += 1
-            for chunk_offset, action in enumerate(chunk[:5]):
+            for chunk_offset, action in enumerate(chunk[:min(5, args.steps - step)]):
+                action_source = "act"
+                if hold_start_step is not None:
+                    action = hold.action(obs)
+                    action_source = "hold_rule"
+
                 before_eef = obs["robot0_eef_pos"].copy()
                 before_cube = obs["cube_pos"].copy()
                 before_gripper = obs["robot0_gripper_qpos"].copy()
                 obs, reward, done, info = env.step(action)
                 step += 1
                 success = bool(env._check_success())
+                metric.update(success)
+                if hold is not None and hold_start_step is None and metric.start is not None:
+                    hold.activate(obs, env.robots[0].part_controllers["right"])
+                    hold_start_step = step + 1  # 第一条规则动作在下一步执行
+
                 success_streak = success_streak + 1 if success else 0
                 max_success_streak = max(
                     max_success_streak, success_streak
@@ -194,6 +213,7 @@ def main():
 
                 row = {
                     "step": step,
+                    "action_source": action_source,
                     "time_s": step / 20.0,
                     "chunk_id": chunk_id,
                     "chunk_offset": chunk_offset,
@@ -247,9 +267,6 @@ def main():
                 print("step:", step, "success:", success,
                       "cube_z:", float(obs["cube_pos"][2]), flush=True)
 
-        output = Path("outputs/act_valid100") / f"episode_{episode_id:04d}"
-        output.mkdir(parents=True, exist_ok=True)
-
         with (output / "steps.csv").open(
             "w", newline="", encoding="utf-8"
         ) as f:
@@ -279,6 +296,11 @@ def main():
             loop=0,
         )
         result = {
+            **metric.result(),
+            "policy": args.policy,
+            "hold_rule_start_step": hold_start_step if hold_start_step is not None and hold_start_step <= step else None,
+            "hold_target_position": hold.position.tolist() if hold is not None and hold.position is not None else None,
+            "hold_target_quaternion_xyzw": hold.quaternion.tolist() if hold is not None and hold.position is not None else None,
             "validation_episode": episode_id,
             "steps": step,
             "success_any": bool(success_any),

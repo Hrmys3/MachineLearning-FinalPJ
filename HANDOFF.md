@@ -191,9 +191,9 @@ python scripts/data/prepare_lift_splits.py
 python scripts/data/cache_lift_data.py
 ACT_PRETRAINED=0 python scripts/train/train_act_smoke.py
 ACT_PRETRAINED=1 python scripts/train/train_act_lift20.py
-MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/eval/eval_act_logged.py
-python scripts/eval/run_act_validation.py
-python scripts/eval/make_eval_grid.py
+MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/eval/eval_act_logged.py --output outputs/act_single_v2
+python scripts/eval/run_act_validation.py --output outputs/act_valid_v2
+python scripts/eval/make_eval_grid.py --input outputs/act_valid_v2 --output outputs/act_valid_v2_grid.gif
 ```
 
 数据下载见根README。ACT_PRETRAINED=1只控制模型初始化；推理设0后仍加载完整checkpoint，不代表随机推理。批量运行器会给子进程设置评测环境变量，细节看代码。
@@ -231,3 +231,17 @@ Windows曾有 `F:\Academy\ML\LIFT_PROJECT_REPORT.md` 教学稿，不能假定它
 7. 经用户授权后共享权重/完整证据；之后再讨论Push-T。
 
 不要未经实验就认定保持段是唯一原因；不要悄悄强制闭合夹爪后把效果归功于纯ACT；若加入规则，明确命名为额外控制策略并单独比较。
+## 14. 保持规则与新评测接口（2026-11-03）
+
+现有协作与交接文档已本地提交为 db1c0ad，未 push。新增代码工作尚未提交。
+
+评测入口现要求 `--output` 指定独立实验目录；单轮 logged 与 one 共享实现。`--policy act` 保持纯 ACT；`--policy act_hold` 使用原生高度连续10步触发固定末端位姿、持续闭合夹爪的规则，下一步生效且不返回 ACT。新增首次确认抬升后连续40步原生高度达标指标，确认10步计入保持，首次中断后重抓不能覆盖失败。窗口不足单列，仍在主成功率分母内。详细命令、数据位置与协议见 README 推理与评测章节。基线小型记录及 outputs/act_valid100 均未覆盖。
+
+规则与新指标是新增实现，不能将旧基线结果当作新规则效果。
+
+已完成验证：4项指标单元测试、评测脚本语法检查、git diff --check；现有 WSL Python 环境下无相机40步保持控制正常（空载末端位置漂移约2.91e-10m）。CUDA＋GLFW单初态100步集成检查保存在 `outputs/act_hold_smoke_v1/episode_0057/`：第38步首次成功，第47步确认，第48步规则生效，原生高度连续达标63步，2秒保持及最终成功均为真。该轮只验证集成，不能推断20轮成功率；未执行批量实验或重训练。沙箱内无法访问CUDA，Numba缓存也受写权限限制，物理和相机集成检查经授权在沙箱外执行。源码快照记录功能在此次单轮之后添加，故该轮旧config不含新增快照；没有回填或改写这轮运行配置。
+
+GIF总览更新：`run_act_validation.py` 在全部子进程结束后自动调用 `make_eval_grid.make_grids`，按本次实验顺序每20轮生成一份4×5动画 `grid_001.gif` 等；不足20轮保留空格，失败/缺失保留原位。独立命令 `python scripts/eval/make_eval_grid.py --input outputs/act_hold_valid_v1` 可用于已完成实验。21轮合成数据验证了分组、缺失位置、动画及防覆盖，不重跑推理。
+已为现有 `outputs/act_hold_valid_v1/` 生成 `grid_001.gif`，实际检查为960×888、101帧；未改写逐轮评测结果，未提交或推送本次代码。
+
+用户随后要求提交上述实现：提交范围为保持规则、首次抬升保持指标、评测输出保护与源码快照、GIF分组自动拼接及相关文档/测试；提交前再次通过4项指标测试、5个评测模块语法检查和 git diff --check。用户补充要求将 `Final_PJ.pdf` 一并纳入本地提交，提交信息不单独提及PDF；无 push 或资源发布。

@@ -143,14 +143,43 @@ data/robomimic_source/v1.5/lift/ph/demo_v15.hdf5
 单初态推理、批量验证与动画总览：
 
 ```bash
-MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/eval/eval_act_logged.py
-python scripts/eval/run_act_validation.py
-python scripts/eval/make_eval_grid.py
+MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/eval/eval_act_logged.py --output outputs/act_single_v2
+python scripts/eval/run_act_validation.py --output outputs/act_valid_v2
+# 已完成的实验可单独拼接；若批量入口已自动生成，则不必重复执行
+python scripts/eval/make_eval_grid.py --input outputs/act_valid_v2 --output outputs/act_valid_v2_grid.gif
 ```
 
 推理时设置 `ACT_PRETRAINED=0` 是为避免重复下载初始化权重，之后仍会加载 checkpoint 中的完整模型参数。
 
-单初态脚本可能覆盖原输出；批量评测发现已有结果时会停止。重新运行前应明确使用哪个实验目录，不要混合不同模型的结果。
+评测必须通过 `--output` 指定新实验目录。批量入口拒绝已有实验目录，单轮入口拒绝已有逐轮目录；包括失败运行在内均不自动覆盖。默认 `--policy act` 为纯 ACT，`--steps 100`，`--index 0` 为单轮使用的验证集索引。
+
+启用额外保持规则：
+
+```bash
+MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/eval/run_act_validation.py --policy act_hold --output outputs/act_hold_valid_v1
+```
+
+`act_hold` 连续10步满足原生高度条件后，从下一步开始固定当前末端世界系位姿，并持续发送夹爪闭合命令；使用 OSC_POSE 当前缩放生成位置/旋转反馈增量，不直接锁定关节。切换依赖仿真物体高度真值，切换后不返回 ACT，必须标为“ACT＋保持控制器”。规则效果需要闭环实测，不能视作模型学会保持。
+
+两种策略均新增 `first_lift_hold_2s_success`：首次连续10步确认的抬升回溯到起点，累计连续40步（20Hz下约2秒）原生高度达标。确认时间计入40步，首次高度条件中断后重抓不抵消失败；达标40步之后的掉落不撤销已完成的2秒保持，但仍记录首次高度条件中断与最终成功。该指标只衡量高度保持，不证明稳定接触。100步内第61步为最后一个能完整观察40步的起点；更晚起点若未观察满，记为 `insufficient_window`，主成功率仍计失败，不删除分母。
+
+每轮 `episode_XXXX/` 保存 `config.json`、`steps.csv`、`result.json`、`rollout.gif`，CSV 的 `action_source` 标注 ACT 或规则动作。批量实验根目录保存逐轮 `.log`、`config.json`、`process_status.json` 和实时更新的 `metrics.json`；汇总成功率以全部预定初态为分母，未完成与异常轮次不计成功，并单独报告。配置记录 checkpoint SHA256、代码提交与工作区状态、数据划分校验值、训练种子和评测协议。配置同时保存评测源码文本快照，以便追溯尚未提交的代码；训练种子仅对校验值匹配的已知基线记录为42，未知 checkpoint 记为 null。
+
+批量推理全部结束后自动按本次实验的初态顺序，每20轮生成一份4行×5列同步动画，保存在实验目录的 `grid_001.gif`、`grid_002.gif` 等。最后一组不足20轮保留空格，失败或缺失轮次在原位标记 `MISSING/FAILED`；较短动画结束后保持末帧。标签 `H`、`S`、`F` 分别表示首次抬升保持2秒、连续10步和最终成功，旧结果缺少H时显示 `-`。拼接不改变评测数据，拒绝覆盖已有总览。
+
+已有实验可手动拼接，无需重新推理：
+
+```bash
+python scripts/eval/make_eval_grid.py --input outputs/act_hold_valid_v1
+```
+
+可选 `--output outputs/overview.gif` 自定义文件名，多组时自动命名为 `overview_001.gif` 等。读取本次 `config.json` 的 `episode_ids`，旧实验回退到 `process_status.json` 或已有 episode 目录，不依赖当前数据划分。批量进程若尚未退出，手动拼接可能包含尚未完成的位置，应等待推理结束。
+
+无需仿真即可检查指标边界：
+
+```bash
+python scripts/checks/test_lift_protocol.py
+```
 
 ## 文件管理
 
