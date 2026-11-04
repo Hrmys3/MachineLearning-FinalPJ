@@ -1,0 +1,410 @@
+
+# Resolve project-relative paths from the repository root.
+import os as _project_os
+from pathlib import Path as _ProjectPath
+from mlpj.common.paths import PROJECT_ROOT as _PROJECT_ROOT
+_project_os.chdir(_PROJECT_ROOT)
+"""单个验证初态的 ACT / ACT＋规则保持闭环评测。"""
+
+import time
+_SCRIPT_STARTED = time.perf_counter()
+
+import json
+import csv
+import sys
+from argparse import Namespace
+from mlpj.lift.eval.lift_protocol import FirstLiftMetric, HoldController, parse_args, experiment_config, evaluation_ids
+from pathlib import Path
+
+import h5py
+import numpy as np
+import torch
+import torch.nn.functional as F
+from PIL import Image
+import robosuite as suite
+from mlpj.common.performance import Timings, precision_context, runtime_info
+from mlpj.lift.eval.rollout_video import save_rollout_gif
+
+root = Path("third_party/lift/act_lift").resolve()
+sys.path.insert(0, str(root))
+sys.path.insert(0, str(root / "detr"))
+from detr.models import build_ACT_model
+
+BASE = Path("data/lift/lift_act")
+SOURCE = Path("data/lift/robomimic_source/v1.5/lift/ph/demo_v15.hdf5")
+CAMERAS = ["agentview", "robot0_eye_in_hand"]
+
+
+def decode(value):
+    return value.decode() if isinstance(value, bytes) else value
+
+
+class PolicyRuntime:
+    def __init__(self, args):
+        started = time.perf_counter()
+        perf = args.settings["performance"]
+        if perf.get("torch_threads") is not None:
+            torch.set_num_threads(perf["torch_threads"])
+        self.ckpt = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
+        model = build_ACT_model(Namespace(**self.ckpt["model_args"])).cuda()
+        model.load_state_dict(self.ckpt["model"])
+        model.eval()
+        self.model = torch.compile(model) if args.settings["eval"]["compile_model"] else model
+        self.mean = torch.tensor([0.485, 0.456, 0.406])[None, :, None, None]
+        self.std = torch.tensor([0.229, 0.224, 0.225])[None, :, None, None]
+        torch.cuda.synchronize()
+        self.load_seconds = time.perf_counter() - started
+
+
+def main(args=None, runtime=None):
+    episode_started = time.perf_counter()
+    args = args or parse_args()
+    episode_id = evaluation_ids(args)[args.index]
+    settings = args.settings["eval"]
+    output = args.output / f"episode_{episode_id:04d}"
+    # 在模型加载和仿真之前拒绝复用目录，也保留失败运行证据。
+    output.mkdir(parents=True, exist_ok=False)
+    config = experiment_config(args)
+    (output / "config.json").write_text(json.dumps(config, indent=2))
+    perf = args.settings["performance"]
+    timings = Timings(perf["timing_enabled"], perf["cuda_events"])
+    loaded_here = runtime is None
+    runtime = runtime or PolicyRuntime(args)
+    ckpt, model = runtime.ckpt, runtime.model
+    stats = ckpt["stats"]
+    if ckpt["camera_names"] != CAMERAS:
+        raise ValueError("checkpoint相机顺序不匹配")
+    config["prediction_horizon"] = ckpt["model_args"]["num_queries"]
+    config["inference_image_size"] = ckpt["image_size"]
+    config["training_seed"] = ckpt.get("training_seed", config["training_seed"])
+    (output / "config.json").write_text(json.dumps(config, indent=2))
+
+    env = None
+    environment_started = time.perf_counter()
+    try:
+        if args.initial_states == "random":
+            with h5py.File(args.settings["random_set"]["path"]) as f:
+                metadata = json.loads(decode(f.attrs["env_args"]))
+                initial_state = f["states"][episode_id]
+                xml = decode(f.attrs["model_xml"])
+        else:
+            mapping = [
+                json.loads(line)
+                for line in Path(
+                    "data/lift/robomimic_mt4_ph/meta/robomimic_source_episodes.jsonl"
+                ).read_text().splitlines()
+                if line.strip()
+            ]
+            entry = next(r for r in mapping if r["episode_index"] == episode_id)
+            with h5py.File(SOURCE, "r") as f:
+                metadata = json.loads(decode(f["data"].attrs["env_args"]))
+                demo = f["data"][entry["source_demo_key"]]
+                initial_state = demo["states"][0]
+                xml = decode(demo.attrs["model_file"])
+        kwargs = metadata["env_kwargs"].copy()
+        kwargs.update(
+            has_renderer=False,
+            has_offscreen_renderer=True,
+            use_camera_obs=True,
+            camera_names=CAMERAS,
+            camera_heights=256,
+            camera_widths=256,
+            lite_physics=False,
+            horizon=max(250, args.steps + 1),
+            control_freq=20,
+        )
+        env = suite.make(metadata["env_name"], **kwargs)
+        env.reset()
+        env.reset_from_xml_string(env.edit_model_xml(xml))
+        env.sim.reset()
+        env.sim.set_state_from_flattened(initial_state)
+        env.sim.forward()
+        env.robots[0].reset(deterministic=True)
+        env.sim.set_state_from_flattened(initial_state)
+        env.sim.forward()
+        env._update_observables(force=True)
+        obs = env._get_observations()
+
+        flips = {camera: True for camera in CAMERAS}
+        expected_state = None
+        if args.initial_states == "valid":
+            # 与同一示范的缓存首帧比较，确认每路相机的翻转约定。
+            flips = {}
+            with h5py.File(
+                BASE / "episodes" / f"episode_{episode_id:04d}.hdf5", "r"
+            ) as f:
+                for camera in CAMERAS:
+                    recorded = f[f"images/{camera}"][0].astype(np.float32)
+                    raw = obs[f"{camera}_image"]
+                    errors = [
+                        np.mean((raw.astype(np.float32) - recorded) ** 2),
+                        np.mean(
+                            (np.flipud(raw).astype(np.float32) - recorded) ** 2
+                        ),
+                    ]
+                    flips[camera] = bool(errors[1] < errors[0])
+                    print(camera, "raw/flipped MSE:", errors,
+                          "flip:", flips[camera], flush=True)
+                expected_state = f["state"][0]
+        def state_vector(observation):
+            return np.concatenate([
+                observation["robot0_eef_pos"],
+                observation["robot0_eef_quat"],
+                observation["robot0_gripper_qpos"],
+            ])
+
+        if expected_state is not None:
+            print("Initial state max difference:", np.max(np.abs(state_vector(obs) - expected_state)))
+        if not np.allclose(env.sim.get_state().flatten(), initial_state, atol=1e-10, rtol=0):
+            raise ValueError("恢复后的仿真状态不匹配")
+
+        if timings.enabled:
+            timings.wall["environment_setup"].append(time.perf_counter() - environment_started)
+
+        def image_array(observation, camera):
+            image = observation[f"{camera}_image"]
+            return np.flipud(image).copy() if flips[camera] else image.copy()
+
+        def predict(observation):
+            state = (
+                state_vector(observation) - np.asarray(stats["state_mean"])
+            ) / np.asarray(stats["state_std"])
+            images = np.stack([
+                image_array(observation, c) for c in CAMERAS
+            ])
+            images = torch.from_numpy(images).permute(0, 3, 1, 2).float() / 255
+            images = F.interpolate(
+                images, tuple(ckpt["image_size"]), mode="bilinear", align_corners=False
+            )
+            mean, std = runtime.mean, runtime.std
+            images = ((images - mean) / std).unsqueeze(0).cuda()
+            state = torch.tensor(
+                state, dtype=torch.float32, device="cuda"
+            ).unsqueeze(0)
+
+            grad_context = torch.inference_mode if settings["inference_mode"] else torch.no_grad
+            with timings.stage("model_forward", gpu=True), grad_context(), precision_context(settings["precision"]):
+                prediction, _, _ = model(state, images, None)
+            with timings.stage("action_to_cpu"):
+                actions = prediction[0].float().cpu().numpy()
+            actions = (
+                actions * np.asarray(stats["action_std"])
+                + np.asarray(stats["action_mean"])
+            )
+            assert np.isfinite(actions).all()
+            return np.clip(actions, -1, 1)
+
+        horizon = settings["execution_horizon"]
+        if horizon > ckpt["model_args"]["num_queries"]:
+            raise ValueError("执行长度不能超过checkpoint预测长度")
+        metric = FirstLiftMetric(settings["metric_confirmation_steps"], settings["metric_hold_seconds"])
+        hold = HoldController(settings["hold_position_gain"], settings["hold_rotation_gain"]) if args.policy == "act_hold" else None
+        trigger_streak = 0
+        hold_start_step = None
+        video = args.settings["video"]
+        frames = [Image.fromarray(image_array(obs, "agentview"))] if video["save_rollout"] else []
+        frame_steps = [0] if frames else []
+        rollout_started = time.perf_counter()
+        trace = []
+        success_streak = 0
+        max_success_streak = 0
+        first_stable_success = None
+        first_loss_after_success = None
+        chunk_id = 0
+
+        success_any = False
+        first_success = None
+        step = 0
+
+        while step < args.steps:
+            with timings.stage("policy_predict_total"):
+                chunk = predict(obs) if hold_start_step is None else np.zeros((horizon, 7))
+            chunk_id += 1
+            for chunk_offset, action in enumerate(chunk[:min(horizon, args.steps - step)]):
+                action_source = "act"
+                if hold_start_step is not None:
+                    action = hold.action(obs)
+                    action_source = "hold_rule"
+
+                before_eef = obs["robot0_eef_pos"].copy()
+                before_cube = obs["cube_pos"].copy()
+                before_gripper = obs["robot0_gripper_qpos"].copy()
+                with timings.stage("env_step_including_render"):
+                    obs, reward, done, info = env.step(action)
+                step += 1
+                success = bool(env._check_success())
+                metric.update(success)
+                trigger_height = env.model.mujoco_arena.table_offset[2] + settings["hold_trigger_height"]
+                trigger_streak = trigger_streak + 1 if obs["cube_pos"][2] > trigger_height else 0
+                if hold is not None and hold_start_step is None and trigger_streak >= settings["hold_trigger_steps"]:
+                    hold.activate(obs, env.robots[0].part_controllers["right"])
+                    hold_start_step = step + 1  # 第一条规则动作在下一步执行
+
+                success_streak = success_streak + 1 if success else 0
+                max_success_streak = max(
+                    max_success_streak, success_streak
+                )
+
+                # 原生成功连续 10 步，即在 20 Hz 下保持约 0.5 秒。
+                if success_streak >= 10 and first_stable_success is None:
+                    first_stable_success = step
+
+                if (
+                    success_any and not success
+                    and first_loss_after_success is None
+                ):
+                    first_loss_after_success = step
+
+                gripper = obs["robot0_gripper_qpos"].copy()
+                eef = obs["robot0_eef_pos"]
+                cube = obs["cube_pos"]
+
+                row = {
+                    "step": step,
+                    "action_source": action_source,
+                    "time_s": step / 20.0,
+                    "chunk_id": chunk_id,
+                    "chunk_offset": chunk_offset,
+                    "reward": float(reward),
+                    "native_success": int(success),
+                    "success_streak_steps": success_streak,
+                    # action 是从前一时刻观测预测、在本步执行的动作。
+                    "gripper_command": float(action[-1]),
+                    "gripper_q0_before": float(before_gripper[0]),
+                    "gripper_q1_before": float(before_gripper[1]),
+                    "gripper_q0_after": float(gripper[0]),
+                    "gripper_q1_after": float(gripper[1]),
+                    # 两个滑动关节坐标之差，仅作为开度代理量。
+                    "gripper_aperture_proxy": float(
+                        abs(gripper[0] - gripper[1])
+                    ),
+                    "cube_z_before": float(before_cube[2]),
+                    "cube_z_after": float(cube[2]),
+                    "cube_dz": float(cube[2] - before_cube[2]),
+                    "eef_z_before": float(before_eef[2]),
+                    "eef_z_after": float(eef[2]),
+                    "eef_cube_distance": float(np.linalg.norm(eef - cube)),
+                }
+                for i, value in enumerate(action):
+                    row[f"action_{i}"] = float(value)
+                for label, position in (
+                    ("eef", eef), ("cube", cube)
+                ):
+                    for axis, value in zip("xyz", position):
+                        row[f"{label}_{axis}"] = float(value)
+                trace.append(row)
+
+                if step % 5 == 0:
+                    print(
+                        f"step={step:03d} "
+                        f"grip_cmd={action[-1]:+.3f} "
+                        f"aperture={row['gripper_aperture_proxy']:.4f} "
+                        f"cube_z={cube[2]:.4f} "
+                        f"success={success} streak={success_streak}",
+                        flush=True,
+                    )
+
+                success_any |= success
+                if success and first_success is None:
+                    first_success = step
+                if video["save_rollout"] and (step % video["frame_stride"] == 0 or step == args.steps):
+                    frames.append(Image.fromarray(image_array(obs, "agentview")))
+                    frame_steps.append(step)
+
+            if step % 20 == 0:
+                print("step:", step, "success:", success,
+                      "cube_z:", float(obs["cube_pos"][2]), flush=True)
+
+        rollout_seconds = time.perf_counter() - rollout_started
+        with (output / "steps.csv").open(
+            "w", newline="", encoding="utf-8"
+        ) as f:
+            writer = csv.DictWriter(f, fieldnames=list(trace[0]))
+            writer.writeheader()
+            writer.writerows(trace)
+
+        peak_index = max(
+            range(len(trace)), key=lambda i: trace[i]["cube_z_after"]
+        )
+        peak_row = trace[peak_index]
+
+        # 仅为日志诊断阈值，不改变策略或任务成功标准。
+        negative_after_peak = next(
+            (
+                r["step"] for r in trace[peak_index + 1:]
+                if r["gripper_command"] < -0.2
+            ),
+            None,
+        )
+
+        if frames:
+            with timings.stage("gif_encoding"):
+                save_rollout_gif(frames, frame_steps, output / "rollout.gif")
+        result = {
+            **metric.result(),
+            "policy": args.policy,
+            "hold_rule_start_step": hold_start_step if hold_start_step is not None and hold_start_step <= step else None,
+            "hold_target_position": hold.position.tolist() if hold is not None and hold.position is not None else None,
+            "hold_target_quaternion_xyzw": hold.quaternion.tolist() if hold is not None and hold.position is not None else None,
+            "episode_id": episode_id,
+            "initial_states": args.initial_states,
+            **({"validation_episode": episode_id} if args.initial_states == "valid" else {}),
+            "steps": step,
+            "success_any": bool(success_any),
+            "success_final": bool(env._check_success()),
+            "first_success_step": first_success,
+            "image_flips": flips,
+            "execution_horizon": horizon,
+            "max_native_success_streak_steps": max_success_streak,
+            "max_native_success_streak_seconds": max_success_streak / 20,
+            "stable_native_success_10_steps": max_success_streak >= 10,
+            "first_stable_success_confirmation_step": first_stable_success,
+            "first_native_failure_after_success": first_loss_after_success,
+            "peak_cube_height": peak_row["cube_z_after"],
+            "peak_cube_height_step": peak_row["step"],
+            "first_negative_gripper_command_after_peak": negative_after_peak,
+
+        }
+        (output / "result.json").write_text(json.dumps(result, indent=2))
+        print(json.dumps(result, indent=2))
+        if frames:
+            print("GIF:", (output / "rollout.gif").resolve())
+        with timings.stage("environment_close"):
+            env.close()
+            env = None
+        report = {**timings.report(), **runtime_info(), "kind": "episode",
+                  "parameters": args.settings,
+                  "episode_id": episode_id, "memory_peak_scope": "worker lifetime", "model_loaded_here": loaded_here,
+                  "model_load_seconds": runtime.load_seconds if loaded_here else 0.0,
+                  "rollout_seconds": rollout_seconds, "steps": step,
+                  "sim_steps_per_second": step / rollout_seconds,
+                  "episode_wall_seconds": time.perf_counter() - episode_started}
+        (output / "performance.json").write_text(json.dumps(report, indent=2))
+        return runtime
+
+    finally:
+        if env is not None:
+            env.close()
+
+
+def run_worker():
+    import traceback
+    args = parse_args()
+    indices = [int(i) for i in args.worker_indices.split(",")] if args.worker_indices else [args.index]
+    runtime = None
+    failed = False
+    # worker日志由批量父进程保存，Python异常逐轮记录后继续；底层崩溃由父进程处理。
+    for index in indices:
+        args.index = index
+        try:
+            runtime = main(args, runtime)
+        except Exception:
+            failed = True
+            traceback.print_exc()
+            runtime = None
+    if failed:
+        raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    run_worker()

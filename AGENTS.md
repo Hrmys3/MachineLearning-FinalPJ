@@ -4,7 +4,7 @@
 
 ## 开始工作
 
-1. 阅读根目录 README.md、HANDOFF.md，以及任务涉及的代码和文档。README 说明如何运行，HANDOFF 说明历史、状态和未完成事项，本文件说明如何协作。
+1. 阅读根目录 README.md，以及当前任务对应的交接文档：Lift 读 HANDOFF_LIFT.md，Push-T 读 HANDOFF_PUSHT.md；涉及共享代码、目录、环境或其他同时影响两项任务的更改时，两份都读。README 说明如何运行，两份交接分别说明各任务历史、状态和未完成事项，本文件说明如何协作。
 2. 检查 Git 状态与最近提交，识别用户已有修改、删除和未跟踪文件。不要覆盖、恢复或提交与当前任务无关的改动。
 3. 以实际代码、配置和结果文件为准。交接记录可能落后；发现冲突时核对证据，明确说明不确定性，不编造实验结果。
 4. 简短说明准备做什么，然后执行已授权工作。常规读取、可逆修改与验证不必反复确认；缺少关键信息时只询问必要问题。
@@ -20,22 +20,17 @@
 
 ## 仓库边界
 
-- scripts/checks/：物理、相机和模型计算检查。
-- scripts/data/：源回放、数据检查、划分与缓存。
-- scripts/train/：训练入口。
-- scripts/eval/：单轮推理、批量评测、日志与可视化。
-- scripts/experts/：规则专家与历史自采分支。
-- scripts/tools/：ACT 适配、性能对照与硬件监控工具；共享计时在 scripts/performance.py。
-- configs/lift.yaml：统一训练、模型、评测和随机初态参数；读取及约束在 scripts/project_config.py。
-- experiments/random_dev100/：固定随机开发初态集的小型清单，不包含实际状态文件。
-- experiments/speed_eval10_v1/：已完成速度对照的小型分析和汇总；保留其原始模型/代码来源，不用后续测速覆盖。
-- third_party/act_lift/：已跟踪、实际使用的适配 ACT；保留上游来源和许可证，修改范围尽量小。
-- third_party/act/：可选本地上游副本，普通克隆不包含。
-- experiments/lift20_baseline/：已完成基线的小型配置、指标和结果记录，不用新实验覆盖它。
-- data/、outputs/：大数据与运行资源所在位置。不要因整理代码擅自移动或删除。
-- archive/：历史辅助材料，不是当前运行必经入口。
+- `src/mlpj/common/`：跨任务共享工具，禁止在包初始化时导入仿真框架。
+- `src/mlpj/lift/`、`src/mlpj/pusht/`：任务实现；各自持有数据、训练、仿真与评价语义。
+- `scripts/lift/`、`scripts/pusht/`：运行入口；任务内按checks/data/train/eval/experts/tools分类。共享监控入口在 `scripts/common/tools/`。
+- `tests/common/`、`tests/lift/`、`tests/pusht/`：自动化测试；真实物理、相机及模型检查仍从scripts运行。
+- `configs/lift/default.yaml`：Lift统一参数；读取及约束在 `src/mlpj/lift/config.py`。Push-T配置归 `configs/pusht/`，不复用Lift的20Hz及高度约束。
+- `experiments/lift/`、`experiments/pusht/`：小型实验记录。Lift现有 `random_dev100/`、`speed_eval10_v1/`、`lift20_baseline/` 保留原始来源，不被新实验覆盖。
+- `third_party/lift/act_lift/`：实际使用的适配ACT，保留许可证和上游来源；可选上游副本为 `third_party/lift/act/`。Push-T第三方依赖归 `third_party/pusht/`。
+- `data/lift/`、`data/pusht/`：数据与缓存；`outputs/lift/`、`outputs/pusht/`：运行产物。当前用户已授权本次按任务迁移，今后不要因整理代码擅自移动或删除。
+- `docs/` 保留公共结构说明，任务文档分别归 `docs/lift/`、`docs/pusht/`；`env/`、`archive/`同样按任务划分。
 
-旧根目录脚本已分类迁移，没有同名兼容入口。批量运行器应调用 scripts/eval/eval_act_one.py。不要把上游 ACT 的双臂任务、旧安装步骤或示例指标写成本项目的环境与结果。
+先按README注册源码包，再运行入口。旧路径不保留兼容入口；批量Lift运行器调用 `scripts/lift/eval/eval_act_one.py`。Push-T目前只有目录边界，没有可运行实现。不要把上游ACT的双臂任务、安装步骤或示例指标写成本项目结果。
 
 ## 环境与依赖
 
@@ -43,7 +38,7 @@
 - 当前主要验证组合为 Linux/WSL2 Ubuntu22.04、Python3.11、robosuite1.5.1、MuJoCo3.3.0、Mink0.0.13；框架版本见 env/README.md。
 - 训练与 ACT 推理入口依赖 CUDA；不要未经验证声称支持 CPU。相机图形后端与 GPU 张量计算必须分别验证。
 - 不要无目的升级依赖。涉及兼容性时先查看安装版本和冲突，再改最小必要范围。
-- env/snapshots/ 是历史记录，不是完整可移植锁文件。不要声称已完成空白机器端到端复现。
+- env/lift/snapshots/ 是历史记录，不是完整可移植锁文件。不要声称已完成空白机器端到端复现。
 
 ## 数据与模型约定
 
@@ -51,7 +46,7 @@
 - PH 状态9维：末端位置3、xyzw四元数4、夹爪位置2；动作7维：world系位置增量3、轴角旋转增量3、夹爪1。历史自采的9维是关节7+夹爪2，不能混用。
 - 双相机顺序、RGB通道、上下翻转、缩放和归一化必须与训练一致。不要仅凭维度相同推定兼容。
 - 固定随机开发集以 random_set.path 指向的状态文件及同名清单为准；核对SHA256、数量、种子。它不是源示范的valid/heldout，随机编号与示范episode编号不能混用。修改数量或种子须使用新路径建立新版本，不按策略成败筛选初态。
-- 固定 episode 划分以 data/lift_act/splits.json 为准。统计量仅使用对应训练预算，禁止引入验证或保留集统计。
+- 固定 episode 划分以 data/lift/lift_act/splits.json 为准。统计量仅使用对应训练预算，禁止引入验证或保留集统计。
 - 已适配的模型代码随仓库提供，正常运行不必重新生成；适配器拒绝覆盖已有目录时，不要通过盲目删除绕过。
 
 ## 实验纪律
@@ -65,8 +60,8 @@
 - 同时报任意成功、连续成功和最后成功；最后一步成功不等于全程稳定持有。现有基线为19/20、19/20、3/20，具体协议见实验记录，不应只宣传95%。
 - 同时报首次有效抬升后的配置时长保持成功率与hold_status分类；默认2秒时确认的10步计入40步，首次中断后重抓不能覆盖失败。窗口不足仍留在总分母，不能描述成已证实掉落；未确认抬升不能未经检查全称抓空。高度保持不等同于接触稳定。
 - 规则触发高度与原生成功标准独立；修改hold_trigger_height不能悄悄改变原生4cm高度判定。持续闭合命令不保证夹牢，失败需区分主动张开、滑落和抓取覆盖不足。
-- 测速专用的方案、重复次数、更新数、前N初态和输出目录当前保留为命令行参数，用户暂不要求迁入YAML；正式训练/评测优化选项使用configs/lift.yaml，测速方案会覆盖部分基础配置，应检查生成的有效YAML。
-- 性能对照入口为 scripts/tools/benchmark_speed.py；速度与正确性同时报告，缓存构建、编译和输出开销计入总时间，AMP跳过更新必须列明。模型复用按有限轮次重启、每轮仍重建环境；环境复用和减少相机观测尚未实现。不能通过改变20Hz、评测时长或物理参数悄悄修改任务；不因关闭视频就声称模型前向加速。
+- 测速专用的方案、重复次数、更新数、前N初态和输出目录当前保留为命令行参数，用户暂不要求迁入YAML；正式训练/评测优化选项使用configs/lift/default.yaml，测速方案会覆盖部分基础配置，应检查生成的有效YAML。
+- 性能对照入口为 scripts/lift/tools/benchmark_speed.py；速度与正确性同时报告，缓存构建、编译和输出开销计入总时间，AMP跳过更新必须列明。模型复用按有限轮次重启、每轮仍重建环境；环境复用和减少相机观测尚未实现。不能通过改变20Hz、评测时长或物理参数悄悄修改任务；不因关闭视频就声称模型前向加速。
 - 不通过缩短评测时长隐藏掉落；不悄悄锁定夹爪或加入专家接管后仍称纯 ACT。规则控制属于单独方案。
 - 短示范缺乏保持监督是待检验假设，不是已证明的唯一失败原因。抓空、夹持不稳和后期松开要分别分析。
 - 历史专家50/50不属于视觉ACT结果；未训练的50条预算、未执行的多种子和Push-T不得列为成果。
@@ -85,9 +80,9 @@
 常用入口（需先准备对应环境和资源）：
 
 ```bash
-python scripts/checks/test_lift.py
-MUJOCO_GL=glfw python scripts/checks/test_lift_camera.py
-ACT_PRETRAINED=0 python scripts/checks/test_act_model.py
+python scripts/lift/checks/test_lift.py
+MUJOCO_GL=glfw python scripts/lift/checks/test_lift_camera.py
+ACT_PRETRAINED=0 python scripts/lift/checks/test_act_model.py
 ```
 
 完整训练与评测顺序见 README。ACT_PRETRAINED=0 只是不加载 ImageNet 初始化；推理仍需加载训练 checkpoint。
@@ -103,4 +98,7 @@ ACT_PRETRAINED=0 python scripts/checks/test_act_model.py
 
 ## 结束或交接
 
-必要时更新 HANDOFF.md 的真实状态、已完成验证、未解决问题与下一步建议。不要把本文件当实验日志，也不要把一次会话的临时绝对路径扩展为所有成员必须遵守的要求。最终回复说明改动与验证，并明确是否 commit、push 或发布。
+- `HANDOFF_LIFT.md` 维护 Lift 任务进度，`HANDOFF_PUSHT.md` 维护 Push-T 任务进度；任务专属更改更新对应交接。
+- 对两项任务都有影响的更改，必须同时更新两份交接，包括共享包、公共工具、目录结构、协作规则及共同环境约定。分别说明对该任务的影响、已完成验证、限制与下一步，不能只在另一份文档留链接代替必要记录。
+- 交接记录区分当前状态和历史结果；保留来源提交、评价协议和未完成事项，不把目录调整或文档更新写成重新执行实验。
+- 不新增通用 HANDOFF 代替两份任务交接。不要把本文件当实验日志，也不要把一次会话的临时绝对路径扩展为所有成员必须遵守的要求。最终回复说明改动与验证，并明确是否 commit、push 或发布。

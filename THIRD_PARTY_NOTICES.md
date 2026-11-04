@@ -4,8 +4,8 @@
 
 Adapted from https://github.com/tonyzhaozh/act at commit
 `742c753c0d4a5d87076c8f69e5628c79a8cc5488`.
-The adapted copy is under `third_party/act_lift/`. Retain its MIT license and
-the DETR license at `third_party/act_lift/detr/LICENSE`.
+The adapted copy is under `third_party/lift/act_lift/`. Retain its MIT license and
+the DETR license at `third_party/lift/act_lift/detr/LICENSE`.
 Local changes include 9D state / 7D action projections and torchvision weights API.
 
 ## Demonstration data

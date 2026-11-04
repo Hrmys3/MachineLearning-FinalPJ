@@ -13,17 +13,28 @@ venv/
 
 # Downloaded datasets and generated caches
 /data/*
-
-# Keep reproducible experiment configuration
-!/data/lift_act/
-/data/lift_act/*
-!/data/lift_act/splits.json
-!/data/lift_act/act_source_commit.txt
-!/data/lift_act/stats_train_20.json
-!/data/lift_act/stats_train_50.json
+!/data/lift/
+!/data/pusht/
+/data/lift/*
+/data/pusht/*
+!/data/lift/lift_act/
+/data/lift/lift_act/*
+!/data/lift/lift_act/splits.json
+!/data/lift/lift_act/act_source_commit.txt
+!/data/lift/lift_act/stats_train_20.json
+!/data/lift/lift_act/stats_train_50.json
+!/data/pusht/.gitkeep
 
 # Generated results, videos, and checkpoints
-/outputs/
+/outputs/*
+!/outputs/lift/
+!/outputs/pusht/
+/outputs/lift/*
+/outputs/pusht/*
+!/outputs/lift/.gitkeep
+!/outputs/pusht/.gitkeep
+/assets/
+
 *.pt
 *.pth
 *.ckpt
@@ -44,7 +55,12 @@ core.*
 *.core
 
 # Downloaded upstream ACT repository
-/third_party/act/
+/third_party/lift/act/
 
 # Earlier document snapshots
 *.previous
+
+# Editable package metadata and builds
+*.egg-info/
+build/
+dist/

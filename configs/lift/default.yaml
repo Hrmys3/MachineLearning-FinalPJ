@@ -1,0 +1,72 @@
+# 统一参数；命令从仓库根目录执行。复制本文件并传 --config 可建立新方案。
+# model/train 用于下次训练；已有checkpoint的结构和图像尺寸以checkpoint为准。
+# 随机集冻结后修改count/seed须使用新path，禁止覆盖旧集。
+random_set:
+  # 同一固定模型，原生reset采样方块xy/yaw和机器人初始化噪声
+  path: data/lift/lift_act/random_dev100_v1.hdf5
+  count: 100
+  seed: 20261103
+eval:
+  initial_states: random  # random 或 valid（历史20个示范初态）
+  policy: act  # act 或 act_hold
+  steps: 100
+  execution_horizon: 5  # H，不能超过checkpoint预测长度K
+  control_freq: 20  # PH动作仅验证20Hz，当前禁止直接修改
+  hold_trigger_height: 0.04  # 方块中心相对桌面，米；只改变规则触发
+  hold_trigger_steps: 10
+  metric_confirmation_steps: 10
+  metric_hold_seconds: 2.0
+  hold_position_gain: 1.0
+  hold_rotation_gain: 1.0
+  checkpoint: outputs/lift/act_lift20_candidate/checkpoint.pt
+  precision: fp32           # amp_fp16 / amp_bf16需另验证成功率
+  inference_mode: false
+  compile_model: false      # opt-in，首次编译开销计入总时间
+  num_workers: 1            # 同时运行的GPU评测worker，先比较1与2
+  episodes_per_worker: 1    # >1复用模型；环境每轮重建，定期重启隔离故障
+  episode_limit: null       # 测速可取前N个固定初态，不改变冻结集本身
+model:
+  chunk_size: 20
+  hidden_dim: 256
+  dim_feedforward: 1024
+  enc_layers: 4
+  dec_layers: 4
+  nheads: 8
+  backbone: resnet18
+  dropout: 0.1
+  image_size:
+  - 128
+  - 128
+train:
+  budget: 20  # 20或50，自动配套训练统计量
+  seed: 42
+  updates: 2000
+  batch_size: 8
+  lr: 0.0001
+  lr_backbone: 1.0e-05
+  weight_decay: 0.0001
+  kl_weight: 10.0
+  gradient_clip: 1.0
+  pretrained_backbone: true  # ACT_PRETRAINED环境变量可覆盖
+  output: outputs/lift/act_lift20_config_v1  # 必须是新目录
+  num_workers: 0
+  pin_memory: false
+  persistent_workers: false
+  prefetch_factor: 2
+  cache_mode: none          # none / raw_ram / processed_ram；缓存模式要求worker=0
+  non_blocking_transfer: false
+  precision: fp32
+  compile_model: false
+performance:
+  torch_threads: null       # CPU预处理线程；A/B用相同设置，避免过度线程竞争
+  timing_enabled: true
+  cuda_events: false        # 详细GPU事件计时有额外开销，A/B使用相同设置
+  hardware_monitor_enabled: false
+  hardware_sample_seconds: 1.0
+  warmup_updates: 20        # 只从稳定训练速度统计排除，不跳过训练
+  profiler_enabled: false
+  profiler_active_steps: 5
+video:
+  save_rollout: true
+  frame_stride: 1           # 只抽取保存帧，不改变图像观测/20Hz/100步
+  auto_make_grids: true
