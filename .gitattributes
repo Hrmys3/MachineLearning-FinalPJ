@@ -1,0 +1,2 @@
+# Unified diff context lines may contain a required single space.
+env/pusht/*.patch -whitespace

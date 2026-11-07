@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-07",
+  "scope": "RoboDojo push_T/arx_x5 layout 0, real EvalEnv and separate localhost dummy policy, one joint action",
+  "head": "0fdbaa9f2b5283f8a4239ea1aba74a92741c5c74",
+  "upstream": "f57e1633ffed59761bc8e568cfe7530c4b33381c",
+  "xpolicylab": "5d0be1499634d3176258c8f2e31f5fe816497b0a",
+  "evidence": {
+    "sim": "outputs/pusht/checks/eval_link_sim_20261107_v2/result.json",
+    "server": "outputs/pusht/checks/eval_link_server_20261107_v2/result.json",
+    "log": "outputs/pusht/checks/eval_link_sim_20261107_v2.log",
+    "sim_result_sha256": "172c5d9f195ebdd5ea1598bfa38b55da2ba204f82315da25e2fca5c06313a113",
+    "server_result_sha256": "a63768044aa366374b7d7360b96393ccbf9f669733efe3d463f361f1f9dd0920"
+  },
+  "observed": {
+    "sim_exit_code": 0,
+    "sim_ok": true,
+    "resets": 1,
+    "action_requests": 1,
+    "cameras": ["cam_head", "cam_left_wrist", "cam_right_wrist"],
+    "camera_shape": [480, 640, 3],
+    "camera_dtype": "uint8",
+    "action_dims": [6, 1, 6, 1],
+    "physical_steps_per_action": 10,
+    "left_joint0_target_delta_rad": 0.01,
+    "left_joint0_measured_delta_rad": 0.008826076052571385,
+    "gpu_after_mib": 5,
+    "gpu_after_utilization_percent": 0
+  },
+  "limitations": "Dummy policy; one layout and action; no ACT checkpoint, dataset timing audit, full episode or task success rate. Stronger field assertions were added to the scripts after v2 and have not been rerun."
+}

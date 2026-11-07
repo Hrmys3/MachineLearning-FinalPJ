@@ -30,7 +30,7 @@
 - `data/lift/`、`data/pusht/`：数据与缓存；`outputs/lift/`、`outputs/pusht/`：运行产物。当前用户已授权本次按任务迁移，今后不要因整理代码擅自移动或删除。
 - `docs/` 保留公共结构说明，任务文档分别归 `docs/lift/`、`docs/pusht/`；`env/`、`archive/`同样按任务划分。
 
-先按README注册源码包，再运行入口。旧路径不保留兼容入口；批量Lift运行器调用 `scripts/lift/eval/eval_act_one.py`。Push-T目前只有目录边界，没有可运行实现。不要把上游ACT的双臂任务、安装步骤或示例指标写成本项目结果。
+先按README注册源码包，再运行入口。旧路径不保留兼容入口；批量Lift运行器调用 `scripts/lift/eval/eval_act_one.py`。Push-T已有独立环境检查入口和ACT数据组件，尚无正式训练或完整评测入口。不要把上游ACT的双臂任务、安装步骤或示例指标写成本项目结果。
 
 ## 环境与依赖
 
@@ -42,10 +42,11 @@
 
 ## 数据与模型约定
 
-- 当前 ACT 主线使用 RoboMimic PH 开源 Lift 示范，不是历史自采数据。任务为 Panda Lift；Push-T 尚未实现。
+- 当前 ACT 主线使用 RoboMimic PH 开源 Lift 示范，不是历史自采数据。任务为 Panda Lift。Push-T使用RoboDojo双X5、25Hz、14维joint状态/动作与三路RGB；正式训练和ACT闭环尚未验收。
 - PH 状态9维：末端位置3、xyzw四元数4、夹爪位置2；动作7维：world系位置增量3、轴角旋转增量3、夹爪1。历史自采的9维是关节7+夹爪2，不能混用。
 - 双相机顺序、RGB通道、上下翻转、缩放和归一化必须与训练一致。不要仅凭维度相同推定兼容。
 - 固定随机开发集以 random_set.path 指向的状态文件及同名清单为准；核对SHA256、数量、种子。它不是源示范的valid/heldout，随机编号与示范episode编号不能混用。修改数量或种子须使用新路径建立新版本，不按策略成败筛选初态。
+- Push-T固定划分以 `configs/pusht/splits_v1.json` 为准，0、1号已用于接口调试并属于训练池；不得再列为未接触的测试示范。ACT组件使用同索引动作标签，统计量只含所选训练预算的真实帧；上游原训练入口未接入该组件。
 - 固定 episode 划分以 data/lift/lift_act/splits.json 为准。统计量仅使用对应训练预算，禁止引入验证或保留集统计。
 - 已适配的模型代码随仓库提供，正常运行不必重新生成；适配器拒绝覆盖已有目录时，不要通过盲目删除绕过。
 
@@ -88,6 +89,9 @@ ACT_PRETRAINED=0 python scripts/lift/checks/test_act_model.py
 完整训练与评测顺序见 README。ACT_PRETRAINED=0 只是不加载 ImageNet 初始化；推理仍需加载训练 checkpoint。
 
 ## Git 与资源发布
+
+- Push-T后续开发使用 `pusht` 分支，`main`保留创建分支时的Lift基线；合并两者需单独检查。分支不隔离当前工作目录的数据、输出、Python环境或GPU；同时开发时可使用独立worktree，仍须各自检查资源。
+- Lift与Push-T保持任务内实现、配置和依赖独立；只将确有跨任务用途的工具放入common。根README、AGENTS、打包配置及公共工具仍是共享变更面。
 
 - 用户要求 commit 时，只提交与该任务相关的内容。不要默认把其他未跟踪文件、用户删除或新实验资源一并加入。
 - 本地 commit、push、发布 Release 和上传权重是不同动作。没有相应授权时，不执行后面三种操作；过去用户明确要求过只 commit、不发布。

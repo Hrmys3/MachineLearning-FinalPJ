@@ -1,0 +1,3 @@
+[submodule "third_party/pusht/RoboDojo"]
+	path = third_party/pusht/RoboDojo
+	url = https://github.com/RoboDojo-Benchmark/RoboDojo.git

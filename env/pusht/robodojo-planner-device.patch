@@ -1,0 +1,126 @@
+diff --git a/env/camera_manager/capture/tiled_capture_manager.py b/env/camera_manager/capture/tiled_capture_manager.py
+index 079f3c7..1542b7e 100644
+--- a/env/camera_manager/capture/tiled_capture_manager.py
++++ b/env/camera_manager/capture/tiled_capture_manager.py
+@@ -26,12 +26,14 @@ class TiledCaptureManager:
+         config: DictConfig,
+         camera_manager: CameraManager,
+         device: torch.device,
++        capture_device="cuda:0",
+     ):
+         self.sim: IsaacRLEnv = None
+         self.config = config
+         self.camera_manager = camera_manager
+         self.num_envs = num_envs
+         self.device = device
++        self.capture_device = capture_device
+         self.tiled_render_products: List[str] = []  # all the render products
+         self.annotator: List[
+             List[List[Annotator]]
+@@ -127,7 +129,7 @@ class TiledCaptureManager:
+                 # Pre-allocate warp array on CUDA to reuse memory
+                 import warp as wp
+ 
+-                self._output_buffers[cam_id][annotator_name] = wp.zeros(shape, dtype=spec["dtype"], device="cuda:0")
++                self._output_buffers[cam_id][annotator_name] = wp.zeros(shape, dtype=spec["dtype"], device=self.capture_device)
+ 
+     def step(self, env_ids: List[int] = None, cam_ids: List[int] = None) -> List[List[List[any]]]:
+         """
+diff --git a/env/environment/task_env.py b/env/environment/task_env.py
+index 228ddc8..16dbfd4 100644
+--- a/env/environment/task_env.py
++++ b/env/environment/task_env.py
+@@ -19,12 +19,16 @@ class TaskEnv(BaseEnv):
+         # RobotManager must be created before BaseEnv.__init__ because it
+         # provides the InteractiveSceneCfg used to launch the simulation.
+         self.robot_config = config.robot
++        planner_device = config.get("planner_device")
++        if planner_device is None:
++            planner_device = f"cuda:{config.get('eval_cfg', {}).get('device_id', 0)}"
+         self.robot_manager = RobotManager(
+             num_envs=self.num_envs,
+             env_spacing=self.env_spacing,
+             config=self.robot_config,
+             dt=self.dt,
+             device=self.device,
++            planner_device=planner_device,
+         )
+         self._interactiveSceneCfg = self.robot_manager._get_SceneCfg(
+             num_envs=self.num_envs, env_spacing=self.env_spacing
+@@ -58,6 +62,7 @@ class TaskEnv(BaseEnv):
+             self.capture_config,
+             self.camera_manager,
+             self.device,
++            capture_device=planner_device,
+         )
+ 
+     def _setup_scene(self, sim):
+diff --git a/env/planner_manager/curobo_planner.py b/env/planner_manager/curobo_planner.py
+index 311c075..e775c30 100644
+--- a/env/planner_manager/curobo_planner.py
++++ b/env/planner_manager/curobo_planner.py
+@@ -31,6 +31,7 @@ class CuroboPlanner:
+         dt=None,
+         yml_path=None,
+         table_height=0.74,
++        device="cuda:0",
+     ):
+         if yml_path is not None:
+             self.yml_path = yml_path
+@@ -67,7 +68,10 @@ class CuroboPlanner:
+                 )
+             self._active_to_cspace_idx.append(self.cspace_joint_names.index(joint_name))
+ 
+-        self.device_cfg = DeviceCfg()
++        self.device_cfg = DeviceCfg(device=torch.device(device))
++        if self.device_cfg.device.type != "cuda":
++            raise ValueError("CuRobo planner requires an explicit CUDA device")
++        torch.cuda.set_device(self.device_cfg.device)
+ 
+         self.use_cuda_graph = True
+ 
+diff --git a/env/robot_manager/robot_manager.py b/env/robot_manager/robot_manager.py
+index 11b552c..4fb8845 100644
+--- a/env/robot_manager/robot_manager.py
++++ b/env/robot_manager/robot_manager.py
+@@ -25,6 +25,7 @@ class RobotManager:
+         config: DictConfig,
+         dt,
+         device,
++        planner_device="cuda:0",
+     ):
+         self.sim: IsaacRLEnv = None
+         self.control_manager = ControlManager(num_envs=num_envs, robot_manager=self)
+@@ -32,6 +33,7 @@ class RobotManager:
+         self.env_spacing = env_spacing
+         self.robots_cfg = config.get("robots", [])
+         self.device = device
++        self.planner_device = planner_device
+         self.dt = dt
+         self._seeds_per_env: list[int] | None = None
+ 
+@@ -546,6 +548,7 @@ class RobotManager:
+                 dt=self.dt,
+                 yml_path=robot.curobo_yml_path,
+                 table_height=0.74 - root_pose[2],
++                device=self.planner_device,
+             )
+             self.ik_solver[robot.robot_name] = self.planner[robot.robot_name]
+ 
+diff --git a/src/eval_client/main.py b/src/eval_client/main.py
+index d0c2c90..dfaa02e 100644
+--- a/src/eval_client/main.py
++++ b/src/eval_client/main.py
+@@ -62,6 +62,12 @@ parser.add_argument("--seed", type=int, required=True, help="policy seed for eva
+ 
+ AppLauncher.add_app_launcher_args(parser)
+ args_cli = parser.parse_args()
++if args_cli.device_id < 0:
++    parser.error("device_id must be non-negative")
++if getattr(args_cli, "device_explicit", False) and args_cli.device != f"cuda:{args_cli.device_id}":
++    parser.error("--device must agree with --device_id")
++args_cli.device = f"cuda:{args_cli.device_id}"
++args_cli.multi_gpu = False
+ 
+ # Safe to import before AppLauncher: env is a namespace package (no __init__)
+ # and GLOBAL_CONFIGS only imports os, so this pulls in no app-dependent code.

@@ -1,0 +1,4 @@
+# Added environment-side client dependencies; use with Isaac and CuRobo constraints.
+transforms3d==0.4.2
+msgpack==1.2.4
+msgpack-numpy==0.4.8

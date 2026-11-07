@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-07",
+  "scope": "real local WebSocket with deterministic dummy policy; no ACT model or simulator",
+  "result": {
+    "ok": true,
+    "resets": 1,
+    "cameras": [
+      "cam_head",
+      "cam_right_wrist",
+      "cam_left_wrist"
+    ],
+    "action_dims": [
+      6,
+      1,
+      6,
+      1
+    ],
+    "packed_dim": 14,
+    "scope": "real local WebSocket with deterministic dummy policy; no ACT model or simulator"
+  },
+  "source_sha256": "ab5d7c4057a11262967f786acf9dbd8b4320803784137b69f52dbf7975c355a3",
+  "result_sha256": "266c3d31106060ef9c579779d1a9190f34b9839d582f5942e8bbfefd0398a462",
+  "evidence": "outputs/pusht/checks/ws_transport_v2/result.json",
+  "policy_python": "act environment, Python 3.10.22",
+  "websockets": "16.1.1",
+  "upstream": "XPolicyLab 5d0be1499634d3176258c8f2e31f5fe816497b0a",
+  "limitations": [
+    "Loopback deterministic dummy policy",
+    "No actual ACT checkpoint or Isaac environment in same process",
+    "No full EvalEnv.take_action integration"
+  ]
+}

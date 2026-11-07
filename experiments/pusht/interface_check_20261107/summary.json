@@ -1,0 +1,143 @@
+{
+  "kind": "environment diagnostic, not policy evaluation",
+  "date": "2026-11-07",
+  "head": "0fdbaa9f2b5283f8a4239ea1aba74a92741c5c74",
+  "upstream_head": "f57e1633ffed59761bc8e568cfe7530c4b33381c",
+  "source_sha256": "5e3faf9ed5197b3244336d73ec060c2f8caecb221d01af54b81eb7f4dbfff1cc",
+  "layout_sha256": "5d6c4c37b2715479cb6a16f6d1200c5de740f1fbbaa216640b3b8828295f0b07",
+  "evidence": "outputs/pusht/checks/task_interfaces_v2",
+  "result_sha256": "8f22a04becadafeab780b186196f6fb38a63f2f5c0434b1c79260307523afc1d",
+  "process": {
+    "returncode": 0,
+    "timed_out": false
+  },
+  "planned_resets": 3,
+  "completed_resets": 3,
+  "native_stability_passes": 3,
+  "strict_hold_passes": 3,
+  "hold_max_drift": {
+    "position_m": 0.0,
+    "angle_deg": 2.4148365394514667e-06
+  },
+  "reset_comparisons": [
+    {
+      "index": 1,
+      "object_errors": {
+        "t": {
+          "position_m": 7.028863677424642e-08,
+          "angle_deg": 0.00013285990853392557
+        },
+        "target_t": {
+          "position_m": 0.0,
+          "angle_deg": 1.7075472925031877e-06
+        },
+        "camera_stand": {
+          "position_m": 0.0,
+          "angle_deg": 0.0
+        }
+      },
+      "robot_max_joint_difference": 2.6020852139652106e-18,
+      "passed": true
+    },
+    {
+      "index": 2,
+      "object_errors": {
+        "t": {
+          "position_m": 7.028863677424642e-08,
+          "angle_deg": 0.00013285990853392557
+        },
+        "target_t": {
+          "position_m": 0.0,
+          "angle_deg": 1.7075472925031877e-06
+        },
+        "camera_stand": {
+          "position_m": 0.0,
+          "angle_deg": 0.0
+        }
+      },
+      "robot_max_joint_difference": 1.0842021724855044e-18,
+      "passed": true
+    }
+  ],
+  "saved_T_position_error_m": 2.898665241673755e-08,
+  "actions": [
+    {
+      "arm": "left_arm",
+      "kind": "arm",
+      "units": "rad",
+      "requested_delta": 0.02,
+      "actual_delta": [
+        0.019999967887486068,
+        2.1679889557785106e-13,
+        7.449224709974938e-15,
+        -1.2365060629414908e-13,
+        3.6102503690564614e-11,
+        -5.691023607229395e-12
+      ],
+      "max_target_error": 3.211251393270276e-08,
+      "response_passed": true,
+      "return_error": 7.110074605898992e-11,
+      "return_passed": true
+    },
+    {
+      "arm": "left_arm",
+      "kind": "gripper",
+      "units": "m",
+      "requested_delta": -0.002,
+      "actual_delta": [
+        -0.001999400556087494,
+        -0.002000007778406143
+      ],
+      "max_target_error": 2.939701080340029e-07,
+      "response_passed": true,
+      "return_error": 2.980232238769531e-07,
+      "return_passed": true
+    },
+    {
+      "arm": "right_arm",
+      "kind": "arm",
+      "units": "rad",
+      "requested_delta": 0.02,
+      "actual_delta": [
+        0.019999967887314396,
+        2.1724389206586675e-13,
+        7.48641172283428e-15,
+        -1.2405382251146454e-13,
+        3.6535366962700544e-11,
+        -5.696991055986755e-12
+      ],
+      "max_target_error": 3.211251393270276e-08,
+      "response_passed": true,
+      "return_error": 7.110081490582787e-11,
+      "return_passed": true
+    },
+    {
+      "arm": "right_arm",
+      "kind": "gripper",
+      "units": "m",
+      "requested_delta": -0.002,
+      "actual_delta": [
+        -0.001999400556087494,
+        -0.002000007778406143
+      ],
+      "max_target_error": 2.939701080340029e-07,
+      "response_passed": true,
+      "return_error": 2.980232238769531e-07,
+      "return_passed": true
+    }
+  ],
+  "gpu_after": "uuid, memory.used [MiB], utilization.gpu [%]\nGPU-0b9f2b02-f653-5a07-7c23-9c8640fa5e62, 3 MiB, 0 %",
+  "failed_attempt": {
+    "evidence": "outputs/pusht/checks/task_interfaces_v1",
+    "reason": "ListConfig JSON serialization error; own failed worker stopped",
+    "process": {
+      "returncode": -9,
+      "timed_out": false
+    }
+  },
+  "limitations": [
+    "Only official layout 0 and small low-level servo commands",
+    "No contact-force or penetration measurement",
+    "Not EvalEnv.take_action, policy transport, demonstration replay or ACT evaluation"
+  ]
+}

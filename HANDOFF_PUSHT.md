@@ -1,8 +1,108 @@
 # Push-T 项目交接
 
-更新于 2026-11-04。本文面向首次接手本项目的会话。课程项目已完成 Panda Lift 的初步实验，Push-T 目前处于路线选择和环境验收阶段。Lift 的最新结果、配置与运行入口见 [HANDOFF_LIFT.md](HANDOFF_LIFT.md) 和 [README.md](README.md)。仓库工作约定见 [AGENTS.md](AGENTS.md)。
+更新于 2026-11-07。本文面向首次接手本项目的会话。课程项目已完成 Panda Lift 的初步实验，Push-T已完成环境与假策略单步验收、两条示范基础审计及CPU数据组件检查；真实ACT计算、正式训练和完整闭环尚未完成。Lift 的最新结果、配置与运行入口见 [HANDOFF_LIFT.md](HANDOFF_LIFT.md) 和 [README.md](README.md)。仓库工作约定见 [AGENTS.md](AGENTS.md)。
 
-本次共享目录重排和交接命名调整按用户要求一并纳入本地提交，父提交为 `1ef5ed2`，具体提交号以 `git log` 为准；下文未提交描述此前阶段状态。本次不push或发布，也不增加Push-T实验结果。
+历史目录重排已提交；本次用户明确授权更新文档、创建Push-T分支并提交相关未提交改动。下方阶段记录中的“当前”“未提交”和待办属于各自记录时间，接手以本节及最新进度为准；不改写既有实验来源提交。
+
+
+## 最新接手状态：示范审计、CPU数据接口与pusht分支（2026-11-07）
+
+`.gitattributes`仅对`env/pusht/*.patch`关闭空白检查：统一diff的空白上下文行含必需空格，不按普通源码尾空格处理；其余源码与文档仍做正常diff检查。
+
+- 用户逐步执行了官方episode0/1的下载和检查，两条大小与官方SHA256一致，25Hz、359/512帧、joint state/action均(T,14)且有限；全部可比较位置满足action[t]==state[t+1]。第0条全部关节/位姿数值有限、三路首中末帧解码及预览图目视正常；第1条joint和首末帧解码通过，未目视确认。末动作变化小不证明是填充，图像/状态物理时间对齐和动作回放仍待验。
+- 用户创建`configs/pusht/splits_v1.json`，seed20261107，train20嵌套train50嵌套train60，valid20/heldout20互斥，覆盖100条。已检查的0/1放入train20。当前仅有两条原始HDF5，尚无正式20/50条训练统计量。
+- 原XPolicyLab ACT读取器is_sim=None导致额外取action[t-1]；统计量混入验证数据并重复末帧，转换器要求连续编号。已按指导由用户创建`src/mlpj/pusht/act_data.py`与`act_dataset.py`，实现显式编号、同索引动作块、仅指定训练编号真实帧统计、官方RGB解码与Dataset；上游ACT训练代码未改、原train.sh尚未接入这些组件。
+- 用户反馈合成与真实数据检查通过：动作块t=12有效50项，t=358有效1项/填充49项；标准差ddof=1、下限1e-2；组合样本反归一化恢复原值。CPU批量张量images(2,3,3,480,640)、qpos(2,14)、actions(2,50,14)、is_pad(2,50)通过，三路顺序head/right_wrist/left_wrist。两条诊断统计量不是正式train20统计量。
+- 当前环境能导入ACTPolicy、train_bc、forward_pass，torch2.7.0+cu126、torchvision0.22.0+cu126。刚提出的`check_act_batch.py`尚未创建且未执行，没有模型前向/反向/参数更新或推理结果。下一步由用户按指导准备单批次检查，运行前重新选实时空闲GPU；之后接通训练入口、冻结验证采样和预算统计，再准备全量训练预算和闭环。
+- 详细数据SHA256、字段、局限及可执行CPU示例见[数据与ACT适配](docs/pusht/DATA_AND_ACT.md)。本次文档/提交工作仅做CPU与文档核对，不代替上述待执行GPU检查。
+- 用户授权创建`pusht`分支，起点`0fdbaa9f2b5283f8a4239ea1aba74a92741c5c74`；本次提交包含此前Push-T环境、设备补丁、检查入口、小型记录、数据组件与划分及配套文档，提交号以git log为准。保留main的Lift基线，无push/发布。RoboDojo/IsaacLab本地改动以env/pusht两份补丁保存；父gitlink仍固定上游版本，当前应用补丁的子模块显示修改属于预期。完整HDF5、资产、相机图、日志和权重均不纳入Git。
+- 提交前主代理重新校验两条HDF5 SHA256、固定划分、三个真实CPU样本(0/12、0/358、1/125)与反归一化，解析全部Push-T Python语法；8项既有Push-T测试通过，CUDA未初始化。两份设备/兼容补丁reverse检查通过，文档路径与diff检查通过。
+- Lift与Push-T的实现、配置、第三方适配和依赖保持独立，当前无Push-T到Lift实现的导入。共享README/AGENTS/结构说明更新同步记录于HANDOFF_LIFT；分支不隔离工作目录资源、环境或GPU，后续公共代码变动仍须两份交接同步。
+- 后续继续遵循“指导用户—用户反馈—下一步”；本次明确授权的是文档更新和Git分支/提交，不代表自动开始训练或仿真。
+
+## 历史阶段记录
+
+以下保留环境与仿真验收过程；其中尚未下载/尚未联通等状态，以顶部最新接手状态为准。
+
+## 当前状态：XPolicyLab本机WebSocket与14维打包已通过（2026-11-07）
+
+后续真实仿真单步验证已通过，详情见下节；本节保留先前独立传输检查的过程和边界。
+
+用户要求继续，指定最多两个只读子代理使用`gpt-5.6-luna`、low。已按指定模型启动两个：分别核对EvalEnv/WebSocket/归一化调用链，以及ACT部署与数据字段/相机顺序；均未修改文件、安装、运行GPU/仿真或提交。主代理独立核对并实施下述检查。
+
+- 当前`act`环境Python3.10.22、websockets16.1.1，可导入固定XPolicyLab的PolicyServer与WsModelClient，pip check正常；`pusht_sim`内websockets12.0缺`websockets.asyncio`，不能承载服务端。未升级仿真环境。
+- 新增`scripts/pusht/checks/check_policy_transport.py`：本机真实WebSocket服务端＋客户端，确定性假策略完成握手、reset、三路uint8 RGB像素一致传输和一次get_action，返回双臂6+1+6+1动作；官方pack/unpack 14维往返通过。首次连接受本机HTTP代理变量影响；脚本随后明确设置回环直连，v1与加入打包核对的v2均通过。证据`outputs/pusht/checks/ws_transport_v2/result.json` ok:true、退出码0；小型记录在`experiments/pusht/ws_transport_20261107/summary.json`，用法与限制见[设备与客户端说明](docs/pusht/DEVICE_AND_CLIENT.md)。
+- 子代理核对：官方数据打包顺序为左臂6、左夹爪1、右臂6、右夹爪1；EvalEnv夹爪0～1映射为原始行程，动作块逐条执行，观测采样与25Hz控制需保持对齐。这些是源码分析，不是已运行ACT模型的证据。
+- 主代理使用实际上游EvalEnv方法做无GPU映射检查：14维字段校验、夹爪映射（u=0→-0.01m，u=0.5→0.017m）与10步控制序列通过，前8步插值、后2步保持。初次测试预期误把首步写成1/5，按源码改为1/9后通过；最后Push-T 8项无GPU测试全部通过。证据入口`tests/pusht/test_eval_action_mapping.py`。这仍不等于真实EvalEnv与仿真物理联动。
+
+下一步验收实际仿真进程与独立策略进程连接、EvalEnv.take_action及归一化/插值，随后核验少量示范字段、图像和时间对齐；真实ACT权重、训练与闭环尚未运行。本轮无GPU使用、未commit、push或发布。
+
+## 最新进度：真实EvalEnv与独立假策略单步联通（2026-11-07）
+
+主代理新增`scripts/pusht/checks/serve_dummy_policy.py`和`check_eval_link.py`，用既有`act`与`pusht_sim`两个环境分别运行真实PolicyServer和Isaac EvalEnv。启动前及仿真导入前均检查GPU3完整UUID和空闲；服务仅监听127.0.0.1。v2证据`outputs/pusht/checks/eval_link_sim_20261107_v2/`和`eval_link_server_20261107_v2/`：reset与动作请求各1次，三路640×480×3 uint8相机图像抵达策略进程，双臂6＋1＋6＋1动作返回并经EvalEnv.take_action执行；collect_interval=10，左臂首关节实际增量0.008826rad，目标增量0.01rad。仿真退出码0、ok:true、日志无[Error]/Traceback，GPU结束后5MiB、0%。第一轮v1日志显示动作曾执行，但结果在Isaac关闭后才写导致缺失，相机摘要误用`colors`字段；修正后重新跑v2，不计v1通过。v2后增加显式图像/动作字段断言，依据v2两端数据可满足，尚未重跑新断言。复现见[设备与客户端说明](docs/pusht/DEVICE_AND_CLIENT.md)，小型记录见`experiments/pusht/eval_link_20261107/summary.json`。
+
+本次主代理负责脚本、环境及GPU仿真。两个按用户指定`gpt-5.6-luna`、low运行的只读子代理完成EvalEnv/PolicyServer调用链和ACT字段、数据读取器审计；没有安装、占用GPU、修改文件或提交。此次仍是假策略、单布局、单动作；真实ACT模型、完整评测及官方示范内容和时间对齐未验收。下一步先抽查少量示范HDF5与图像/动作时序，再准备真实ACT最小训练和闭环。未commit、push或发布。
+
+## 当前状态：布局0稳定性、重复重置与低层动作检查通过（2026-11-07）
+
+本节为最新状态，下方阶段记录保留历史边界。用户授权继续初态与动作接口验收，并要求主代理/子代理分别汇报。
+
+- 主代理新增 `src/mlpj/pusht/task_checks.py` 及薄入口 `scripts/pusht/checks/check_task_interfaces.py`。调用原生TaskEnv、固定布局0，记录冻结参数/源码/上游diff/布局SHA256，独立worker有超时、输出不覆盖与父入口及worker两次GPU UUID/空闲核验；不安装依赖或改动物理、任务成功条件。内部父PID检查用于防误调用，不是面对主动伪造的安全认证。
+- 两个只读gpt-6-luna/low子代理分别核对布局恢复/稳定性副作用和动作单位/文档，并汇总冻结参数及日志。主代理复核纠正TaskEnv与闭包EvalEnv.take_action、配置来源的混淆；子代理发现worker可误绕过入口守卫，主代理补上启动前复核与重复进入保护。
+- 首轮 `outputs/pusht/checks/task_interfaces_v1/` 因主代理新增结果中的OmegaConf ListConfig不能JSON序列化失败，异常后未正常收尾，主代理仅停止自己对应worker；退出码-9、未超时，日志与冻结源码保留，GPU释放2MiB/0%。未把首轮计为通过。修复序列化并通过真实OmegaConf/NumPy无GPU回归后，使用新目录v2重跑。
+- 最终证据 `outputs/pusht/checks/task_interfaces_v2/`：计划/完成重置3/3，全部原生稳定性检查及额外250步（dt=.004下1秒）静置通过；记录最大位置漂移0，角漂移约2.41e-6度。两组重复比较通过，T位置最大差7.03e-8米、角差约0.000133度。这里是同一初态重复，不是三个独立测试初态或任务成功率。
+- T保存位置[-0.4174957,-0.1169327,0.7725]与首轮实际位置差约2.90e-8米，说明靠左来自官方布局设置；静置与小幅动作未记录到T位置变化，但没有采集接触力或穿透深度，不能宣称完全无接触。
+- 两臂分别joint1增加0.02rad、夹爪原始关节减少0.002m再返回保存目标，4/4响应及回位通过。通过TaskEnv.step([MetaControl])调用原生伺服，不经过CuRobo轨迹规划。臂最大目标误差3.21e-8rad，夹爪最大目标误差2.94e-7m，夹爪最大回位误差2.98e-7m；另一臂保持检查通过，保存三路图像。
+- v2退出码0、无[Error]/Traceback，保留上游材质等警告；运行前父入口/worker均检查物理3号卡UUID及2MiB/0%，退出后3MiB/0%。7项无GPU测试、pip check、语法、文档路径及diff检查通过。小型记录见 `experiments/pusht/interface_check_20261107/summary.json`，协议见 [环境接口检查](docs/pusht/TASK_INTERFACE_CHECK.md)。
+- 本入口包含原生check_layout_stability，但不等于完整EvalEnv评测流程；额外诊断推进物理步，不调用策略服务器或完整观测/布局有效性对齐流程。稳定性标志仅用于诊断，不是课程成功标准。
+
+下一步由主代理接通并验收EvalEnv/XPolicyLab策略通信、14维动作打包、夹爪0～1映射及原生插值；随后核验少量示范字段与时序，再决定训练。子代理继续只读整理通信日志、核对字段/路径/文档；不安装、不使用GPU、不改文件、不提交。本次没有启动策略服务、下载完整示范或训练ACT，没有改动Lift；未commit、push或发布，保留用户原有暂存项。
+
+## 当前状态：最小资产、X5规划器与固定布局三路相机（2026-11-07）
+
+本节优先于下方历史阶段的“未下载资产/未创建规划器/未实例化场景”描述。用户授权最多两个gpt-6-luna、low推理子代理，限定只读日志与文档核查；主代理复核结果并负责修改、GPU仿真。子代理未安装依赖、使用GPU、修改文件或提交代码。
+
+- 资产固定数据集revision `1127bda94f172d757386945af3eb3a6754d1a4e6`，269个源文件共415,490,428字节，位于 `data/pusht/robodojo_assets/1127bda94f17/Assets/`，上游Assets为相对链接。2026-11-07重新读取所有本地文件，大小及SHA256全部匹配原manifest。不是仅有下载计划，也没有下载完整示范。详情见 [资产与规划检查](docs/pusht/ASSETS_AND_PLANNER.md)。
+- `src/mlpj/pusht/assets.py`及薄入口 `scripts/pusht/data/prepare_x5_planner.py`根据官方curobo_tmp.yml生成本地路径版curobo.yml及来源校验记录；保留原模板，异内容拒绝覆盖。生成文件随检出位置变化，不能移机直接复用。
+- 先前X5真实URDF完整CuroboPlanner初始化、原配置warmup与一次自身目标规划通过，证据 `outputs/pusht/checks/x5_planner_fam191ud/`：退出码0、34.77秒、PyTorch峰值约2.45GiB。它不是任务推动成功率，也不是总显存。
+- 本轮发现TiledCaptureManager输出缓冲区硬编码cuda:0，补充capture_device传递，沿用显式规划设备且保留CPU物理。设备补丁现在涉及五个源码文件（新增tiled_capture_manager.py），不是改变动作、物理参数或任务指标。四项无GPU路由回归通过，pip check正常；补丁reverse检查与语法检查通过。
+- 本轮实际加载官方 `push_T / arx_x5` 布局0，使用原process_config与随机化处理、单环境、dt=0.004、25Hz相机配置。直接实例化原生任务类，重置后恢复保存位姿、机器人初态和200步更新，检查头部/左腕/右腕三路640×480 RGBA。三张图像非空、有限数值，缓冲区均cuda:3；physics_device=cpu、planner_device=cuda:3，断言GPU0无PyTorch张量分配。该断言不证明所有库都未创建其他卡上下文。
+- 证据 `outputs/pusht/checks/task_scene_kb88rdl4/` 含检查脚本、有效配置、三张PNG、日志、result.json、退出状态及GPU前后快照。ok:true、进程退出码0、日志无[Error]/Traceback；主代理目视确认双臂、红T和灰色目标。存在上游USD材质引用越界、MDL编译、无显示及音频警告，不能据出图宣称所有材质正确。运行前实时确认物理3号卡UUID/1MiB/0%，结束后2MiB/0%。
+- 本次仅验收场景加载、一次重置和三路成像。未调用完整EvalEnv稳定性检查、未验证重复重置、受控关节动作、示范回放、WebSocket策略服务、ACT训练或闭环；尤其图中T靠近左夹爪，仍需核对保存初态与碰撞/稳定性，不能直接当合格评测初态。
+
+下一步先验收布局恢复与稳定性、重复重置和小幅受控动作，再接策略通信与示范数据。没有升级依赖、修改Lift内容或重跑Lift；未commit、push或发布，保留用户原有暂存项。下方记录保留其当时的阶段范围。
+
+## 最新增量：设备补丁、真实内核与客户端已检查（2026-11-04）
+
+用户授权继续检查、配置环境。本轮没有训练或正式评测。
+
+- 发现官方device_id未映射至AppLauncher.device；物理配置默认CPU，CuRobo却默认cuda:0。已在四个上游文件作最小设备补丁：入口对齐device_id并关闭多卡、TaskEnv分离planner_device、RobotManager传递规划器设备、CuroboPlanner设置显式CUDA设备及当前设备。不更改原物理设备、dt、频率、动作和成功标准。补丁保存env/pusht/robodojo-planner-device.patch，子模块保持原提交但工作区有本地修改。
+- GPU使用前各自重新核对物理3号卡UUID/1MiB/0%。隔离两关节模型执行三组CuRobo GPU FK与反向传播，对解析公式最大位置误差8.742277657347586e-08、梯度误差0，退出码0。
+- 同进程AppLauncher cuda:3、RoboDojo TaskEnv/评测环境/Push-T类导入、CuRobo显式cuda:3 FK梯度及相机三帧整合检查通过，断言GPU0未分配PyTorch张量；显式ok:true、退出码0、无[Error]日志，PNG目视正常。退出后3号卡1MiB/0%。
+- XPolicyLab固定检出5d0be1499634d3176258c8f2e31f5fe816497b0a，确认包含bb9a0b5官方修复。补齐transforms3d0.4.2、msgpack1.2.4、msgpack-numpy0.4.8；14维float32动作与uint8 RGB数组官方编解码往返通过。未启动策略服务、连接WebSocket或安装ACT模型。ffmpeg已存在。
+- 三项无GPU设备路由测试通过，最终pip check通过。可复现说明见docs/pusht/DEVICE_AND_CLIENT.md，新增约束在env/pusht/constraints-client.txt，证据在outputs/pusht/checks/curobo_gpu_aqnbel8c/，整合结果在integration/。
+- 尚未下载官方资产或实例化X5场景；完整IK、碰撞/运动规划器、CUDA Graph与warmup未验证，不能将FK与导入成功写成Push-T成功。下一步准备最小场景资产后再验收单场景。未commit、push或发布，保留用户此前暂存内容。
+
+## 最新增量：CuRobo安装与接口检查（2026-11-04）
+
+用户授权继续准备CuRobo。已初始化RoboDojo指定子模块d17b54ce32cba095c0b000c4c58777075d11de0e，源码未改。复用pusht_sim安装cu12基础依赖，cuda-core0.7.0、cuda-bindings12.9.10；原有全部包版本保持不变，runtime/NVRTC仍12.6.77，没有安装系统nvcc/CMake/Ninja。首次bindings12.8缺cynvvm，失败证据保留，更新Python绑定后通过。
+
+pip check正常。屏蔽所有CUDA设备的独立进程中，RoboDojo需要的CuRobo类及CUDA Core接口导入通过，CUDA未初始化；未创建规划器、编译GPU内核或运行仿真。本轮没有使用GPU。详细记录及复现命令见docs/pusht/CUROBO_SETUP.md，追加约束在env/pusht/constraints-curobo-cu12.txt，完整日志在outputs/pusht/checks/curobo_compat_aeghgh7c/。
+
+后续GPU运行前必须处理设备问题：RoboDojo规划器DeviceCfg()硬编码默认cuda:0，而RobotManager没有传入self.device；仅选择Isaac GPU3不能保证CuRobo使用同一卡。下一步应处理显式设备传递并做小规模GPU内核/规划验证，再准备XPolicyLab和场景资产。X5 Push-T场景及ACT训练/闭环仍未完成。本次未commit、push或发布，保留用户先前暂存的子模块引用。
+
+## 最新状态：Isaac Lab兼容安装已验证（2026-11-04）
+
+本节替代下文历史“尚未安装Isaac/尚未下载RoboDojo”等当前状态描述；历史记录保留，不代表本轮重跑Lift或完成Push-T任务。
+
+- 用户先前手动完成pusht_sim（Python3.11.17）及Isaac Sim5.1安装；wheel降到0.45.1，安装系统libGLU.so.1后，无窗口启动与相机三帧通过，用户目视确认红色方块，退出码0且GPU释放。原相机证据在outputs/pusht/checks/isaac_camera_bhKyxs/。
+- RoboDojo已作为子模块加入third_party/pusht/RoboDojo，固定f57e1633ffed59761bc8e568cfe7530c4b33381c；其Isaac Lab子模块固定afca7b09d60d8beb9c1cb28b43066499940b969b。.gitmodules和RoboDojo引用为用户先前暂存内容，尚未提交。
+- 用户本轮明确授权代理寻找并实践兼容方案。Lab声明Starlette0.49.1，与Isaac kernel固定FastAPI0.115.7要求的Starlette<0.46冲突。已将Lab该行改为RoboDojo脚本采用的0.45.3，并保存env/pusht/isaaclab-starlette.patch；嵌套子模块因此显示修改。父gitlink不保存补丁，复现须应用保存的补丁。
+- 保留既有Isaac/torch/NumPy等全部版本，仅将setuptools83降为81。已在pusht_sim正常安装core/assets/tasks/rl/mimic五个Lab包的基础依赖，无RL或Robomimic extras。首次仅装前三包时任务导入缺h5py，失败日志保留；默认kit会加载五个扩展，补齐依赖后pip check通过。
+- 本轮实际AppLauncher、任务配置导入及三帧256×256相机回归通过，显式ok:true、退出码0、日志无[Error]，PNG目视确认正常。启动前检查GPU3为1MiB/0%，UUID匹配，渲染及PhysX使用3号卡；退出后2MiB/0%。完整报告、安装前后版本、日志和失败证据在outputs/pusht/checks/dependency_compat_wptldpq6/，最终回归在runtime2/。
+- 可复现步骤见docs/pusht/ISAACLAB_COMPATIBILITY.md；环境要求及版本约束在env/pusht/。约束是本机实测记录，不是空白机器可移植锁文件。
+- 此节记录Isaac Lab安装阶段，当时CuRobo和XPolicyLab未初始化；后续CuRobo状态见最新增量。官方任务资产、X5 Push-T场景及ACT训练/评测仍未验收，不要把基础环境通过写成Push-T成功。
+- 用户要求每次占用GPU前检查空闲。平时按“指导用户操作—用户反馈—下一步”推进；本轮环境安装与回归为用户明确授权实践，不代表后续任务自动执行。此次未commit、push或发布。
 
 ## 维护范围
 
@@ -10,7 +110,7 @@
 
 ## 目录约定
 
-项目包名为 `mlpj`。Push-T实现归 `src/mlpj/pusht/`，入口归 `scripts/pusht/`，配置、数据、结果、实验说明和第三方依赖分别归对应顶层目录的 `pusht/`。当前仅建立目录边界，未下载RoboDojo、安装Isaac或新增训练/闭环实现。Lift已归各目录的 `lift/`，配置为 `configs/lift/default.yaml`。共享工具归 `src/mlpj/common/`。
+项目包名为 `mlpj`。Push-T实现归 `src/mlpj/pusht/`，入口归 `scripts/pusht/`，配置、数据、结果、实验说明和第三方依赖分别归对应顶层目录的 `pusht/`。当前已有环境兼容补丁、资产准备工具和单场景检查证据；RoboDojo、Isaac及最小资产已准备，仍无Push-T训练或评测闭环入口。Lift已归各目录的 `lift/`，配置为 `configs/lift/default.yaml`。共享工具归 `src/mlpj/common/`。
 
 ## 共享结构调整与验证（2026-11-04）
 
@@ -101,6 +201,6 @@ Panda 单臂 7 旋转关节，X5 单臂 6 个，仿真夹爪每指行程分别 4
 
 ## 当前接手点
 
-先协调服务器 GPU 时段，执行 Isaac 5.1 单相机无窗口测试。通过后加载官方 X5 Push-T 场景，再读少量原始 HDF5。若仿真机器暂不可用，可先核验数据字段和 XPolicyLab 版本，Panda 路线仍可独立推进。使用独立输出目录，保留 Lift 基线与失败证据。大数据、模型和完整视频按仓库已有资源边界管理。提交与推送分别授权。
+环境、固定布局与假策略单步联通，以及两条示范的CPU数据组件已检查，详见顶部最新接手状态。下一步准备并由用户执行真实ACT单批次计算检查，再接通训练入口；每次使用GPU前检查实时空闲。若仿真机器暂不可用，可先核验数据字段和 XPolicyLab 版本，Panda 路线仍可独立推进。使用独立输出目录，保留 Lift 基线与失败证据。大数据、模型和完整视频按仓库已有资源边界管理。提交与推送分别授权。
 
 用户随后要求提交资源整理对应的修改：本地提交两份任务交接、公共结构说明及核查记录；迁移后的数据、权重、缓存、上游检出和运行产物继续忽略，不纳入Git。沿用已完成的完整性与回归验证，不重复实验；不push或发布。

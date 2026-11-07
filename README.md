@@ -1,14 +1,14 @@
 # 机器人模仿学习：Lift 与 Push-T
 
-Lift 使用 MuJoCo、robosuite、Panda、RoboMimic PH 示范和适配后的官方 ACT。Push-T 预留独立任务目录，拟接入 RoboDojo 与 XPolicyLab；尚无可运行的 Push-T 训练或评测入口。以下运行命令用于 Lift。
+Lift 使用 MuJoCo、robosuite、Panda、RoboMimic PH 示范和适配后的官方 ACT。Push-T 使用独立的 RoboDojo / Isaac Sim 环境检查入口，策略集成依赖 XPolicyLab；尚无可运行的 Push-T 训练或评测入口。以下训练与评测命令用于 Lift。
 
 ## 目录结构
 
 ```text
-src/mlpj/        # Python包：common共享工具、lift实现、pusht预留
+src/mlpj/        # Python包：common共享工具、lift/pusht任务实现
 scripts/         # 按lift/pusht分开的运行入口；common放共享入口
 tests/           # 按common/lift/pusht分开的自动化测试
-configs/         # lift/default.yaml；pusht配置目录预留
+configs/         # lift/default.yaml；pusht固定划分与任务配置
 experiments/     # lift/pusht的小型实验记录
 docs/            # 公共结构说明及lift/pusht任务文档
 env/             # lift/pusht环境要求与历史快照
@@ -21,6 +21,8 @@ third_party/     # lift/pusht第三方源码及适配副本
 详细说明见 [仓库结构](docs/REPOSITORY_LAYOUT.md)。[Lift 交接](HANDOFF_LIFT.md) 与 [Push-T 交接](HANDOFF_PUSHT.md) 分别维护各自任务的进度、验证和待办；影响两项任务的更改同时记录在两份交接中。
 
 ## 环境要求
+
+本节为 Lift 的运行组合。Push-T 使用独立环境，要求见 [Push-T 环境](env/pusht/README.md)，两者不共用仿真或 ACT 适配实现。
 
 - **操作系统**：Linux；Windows 使用 WSL2 Ubuntu。已验证的发行版为 Ubuntu 22.04，其他系统组合需要单独验证。
 - **Python**：3.11，使用独立的 Python 环境；环境名称可自行选择。
@@ -58,6 +60,48 @@ ACT_PRETRAINED=0 python scripts/lift/checks/test_act_model.py
 ```
 
 `MUJOCO_GL=glfw` 指定图形后端，需要可用的显示环境。无显示服务器应根据驱动和系统条件配置适合的离屏渲染方式。
+
+## Push-T 环境检查
+
+Push-T使用独立的仿真环境，版本及限制见 [Push-T环境要求](env/pusht/README.md)。准备固定版本的第三方源码、设备补丁、官方资产和本地X5规划配置后，可以运行固定布局的重置、稳定性和原生关节伺服检查。
+
+先检查GPU实时空闲，将物理编号和完整UUID填入以下占位参数，并使用新的输出目录：
+
+```bash
+nvidia-smi --query-gpu=index,uuid,memory.used,utilization.gpu --format=csv
+python scripts/pusht/checks/check_task_interfaces.py \
+  --output outputs/pusht/checks/task_interfaces_new \
+  --device-id <GPU_INDEX> --gpu-uuid <GPU_UUID>
+```
+
+入口拒绝已有输出目录和不匹配或非空闲的GPU。诊断包含三次固定布局重置、静置记录和左右臂/夹爪小幅动作；不是策略闭环或任务成功率评测。参数、单位、资源前置及判定边界见 [检查协议](docs/pusht/TASK_INTERFACE_CHECK.md)。
+
+在独立的XPolicyLab兼容策略环境中，可单独检查本机WebSocket、RGB与14维动作传输：
+
+```bash
+python scripts/pusht/checks/check_policy_transport.py --output outputs/pusht/checks/ws_transport_new
+```
+
+此入口使用确定性假策略，不加载ACT权重。具体环境与边界见 [设备与客户端说明](docs/pusht/DEVICE_AND_CLIENT.md)。
+
+真实Isaac EvalEnv与独立本机假策略的单步联通检查，使用`scripts/pusht/checks/serve_dummy_policy.py`和`scripts/pusht/checks/check_eval_link.py`，双进程命令、GPU守卫及结果范围见同一说明文档；它不代表完整评测或模型训练。
+
+## Push-T 示范与 ACT 数据接口
+
+官方数据来自 `RoboDojo-Benchmark/RoboDojo`，版本固定为 `1127bda94f172d757386945af3eb3a6754d1a4e6`。原始示范位于 `data/pusht/robodojo_demos/1127bda94f17/data/RoboDojo/push_T/arx_x5/data/`；固定划分在 `configs/pusht/splits_v1.json`，训练20条嵌套于50条，验证集和保留测试集各20条。
+
+`mlpj.pusht.act_data` 提供显式编号读取、同索引动作块、仅指定训练编号真实帧的统计量及官方RGB解码；`mlpj.pusht.act_dataset.PushTACTDataset` 返回图像、状态、动作和填充掩码。图像解码需在启动Python前将固定XPolicyLab源码根加入导入路径，例如：
+
+```bash
+PYTHONPATH="third_party/pusht/RoboDojo/XPolicyLab${PYTHONPATH:+:$PYTHONPATH}" python - <<'PY'
+from mlpj.pusht.act_data import load_joint_episodes
+base = "data/pusht/robodojo_demos/1127bda94f17/data/RoboDojo/push_T/arx_x5/data"
+for episode_id, (state, action) in load_joint_episodes(base, [0, 1]).items():
+    print(episode_id, state.shape, action.shape)
+PY
+```
+
+此接口尚未接入正式训练入口。上游 ACT 的原入口包含额外动作移位、全数据统计及连续编号假设，不能直接作为本项目的固定划分训练入口。下载、数据契约、检查范围和下一步见 [Push-T 数据与 ACT 适配](docs/pusht/DATA_AND_ACT.md)。下文的数据准备、ACT源码、训练和评测命令均属于 Lift。
 
 ## 数据准备
 
