@@ -156,7 +156,7 @@ data/lift/robomimic_source/v1.5/lift/ph/demo_v15.hdf5
 | `performance` | 阶段计时、可选CUDA事件、硬件采样、训练Profiler与CPU线程数 |
 | `video` | 单轮GIF保存、保存帧间隔和自动总览；不改变模型观测或控制频率 |
 
-模型结构和输入图像尺寸在推理时读取 checkpoint，修改配置的 `model` 不会改造已有模型。训练预算自动对应相应划分和统计量。PH数据的20Hz控制频率固定；时间集成目前未实现。命令行的 `--policy`、`--steps`、`--checkpoint`、`--initial-states` 可覆盖配置。批量运行开始时将实际配置冻结为实验目录的 `parameters.yaml`，后续编辑原配置不会影响已启动的子进程。读取器仍兼容旧实验的可信 `.py` 配置快照；分析历史实验时以其冻结配置和源码快照为准，不用当前YAML替代当时参数。
+模型结构和输入图像尺寸在推理时读取 checkpoint，修改配置的 `model` 不会改造已有模型。训练预算自动对应相应划分和统计量。PH数据的20Hz控制频率固定；时间集成目前未实现。命令行的 `--policy`、`--steps`、`--checkpoint`、`--initial-states`、`--execution-horizon` 可覆盖配置。批量运行开始时将实际配置冻结为实验目录的 `parameters.yaml`，后续编辑原配置不会影响已启动的子进程。读取器仍兼容旧实验的可信 `.py` 配置快照；分析历史实验时以其冻结配置和源码快照为准，不用当前YAML替代当时参数。
 
 默认使用100个固定随机开发初态。初次准备：
 
@@ -180,6 +180,15 @@ python scripts/lift/eval/make_eval_grid.py --input outputs/lift/act_random100_v2
 推理时设置 `ACT_PRETRAINED=0` 是为避免重复下载初始化权重，之后仍会加载 checkpoint 中的完整模型参数。
 
 评测必须通过 `--output` 指定新实验目录。批量入口拒绝已有实验目录，单轮入口拒绝已有逐轮目录；包括失败运行在内均不自动覆盖。默认配置为纯 ACT、100步、100个随机开发初态；`--index 0` 为单轮在所选初态集中的索引。旧验证集使用 `--initial-states valid`。
+
+执行长度H可用 `--execution-horizon 1` 覆盖 `eval.execution_horizon`，不传时沿用YAML。H须为正整数且不超过checkpoint预测长度K；不会改变20Hz或整轮步数。H=1/2/5对照时只改变该参数并分别使用新输出目录，例如：
+
+```bash
+MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/lift/eval/run_act_validation.py \
+  --policy act_hold --execution-horizon 1 --output outputs/lift/h_compare_v1/h1
+```
+
+最终生效的H会写入冻结的 `parameters.yaml` 和 `config.json`。
 
 启用额外保持规则：
 
@@ -265,3 +274,5 @@ MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/lift/tools/benchmark_speed.py --k
 代码、配置、数据划分和小型结果记录使用 Git 管理；下载数据、训练缓存、权重、日志和动画由 `.gitignore` 排除。
 
 需要共享模型和完整评测附件时，可单独发布资源，并在文档中记录下载地址、对应代码版本及文件校验值。
+
+批量 `metrics.json` 的 `lift_latency` 汇总抬升所需控制步数：`first_success_step` 是首次原生高度达标，`first_lift_step` 是首次连续确认抬升的回溯起点，`first_lift_confirmation_step` 是确认完成步。各项报告已观测轮数、未观测或未完成轮数、均值/中位数/最小/最大步数及均值/中位秒数（20Hz下步数除20）；无观测时统计为null。均值只针对达到对应条件的轮次，必须连同成功率解读，不能将其当全部初态的平均完成时间。逐轮字段已存在，新增汇总仅适用于新评测；旧结果可离线复算，不必重跑或改写原文件。

@@ -6,6 +6,7 @@ import subprocess
 import sys
 import time
 import yaml
+import statistics
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 _SCRIPT_STARTED = time.perf_counter()
@@ -14,6 +15,19 @@ os.chdir(_PROJECT_ROOT)
 from mlpj.lift.eval.lift_protocol import parse_args, experiment_config, evaluation_ids
 from mlpj.lift.eval.make_eval_grid import make_grids
 from mlpj.common.performance import HardwareMonitor
+
+
+def lift_step_summary(results, field, n, control_freq):
+    """仅对已观测抬升统计时延；失败/缺失不冒充最大步数。"""
+    values = [r[field] for r in results if r.get(field) is not None]
+    mean = statistics.mean(values) if values else None
+    median = statistics.median(values) if values else None
+    return {'observed': len(values), 'not_observed_or_incomplete': n-len(values),
+            'mean_steps': mean, 'median_steps': median,
+            'min_steps': min(values) if values else None,
+            'max_steps': max(values) if values else None,
+            'mean_seconds': mean/control_freq if mean is not None else None,
+            'median_seconds': median/control_freq if median is not None else None}
 
 
 def write_metrics(root, settings, statuses, results, n):
@@ -28,6 +42,9 @@ def write_metrics(root, settings, statuses, results, n):
                'counts': counts, 'rates': {k: v/n for k, v in counts.items()},
                'hold_status_counts': {state: sum(r['first_lift_hold_status'] == state for r in results)
                     for state in ['success', 'height_condition_lost', 'insufficient_window', 'no_confirmed_lift']}}
+    metrics['lift_latency'] = {field: lift_step_summary(results, field, n, settings['control_freq'])
+                               for field in ['first_success_step', 'first_lift_step',
+                                             'first_lift_confirmation_step']}
     (root/'metrics.json').write_text(json.dumps(metrics, indent=2))
     (root/'process_status.json').write_text(json.dumps(sorted(statuses, key=lambda s: s['episode_id']), indent=2))
 

@@ -1,0 +1,363 @@
+{
+  "input": "outputs/lift/h_compare_v1",
+  "configuration_and_snapshot_match": true,
+  "summaries": {
+    "1": {
+      "lift_latency": {
+        "first_success_step": {
+          "observed": 92,
+          "not_observed_or_incomplete": 8,
+          "mean_steps": 45.47826086956522,
+          "median_steps": 43.5,
+          "min_steps": 36,
+          "max_steps": 84,
+          "mean_seconds": 2.273913043478261,
+          "median_seconds": 2.175
+        },
+        "first_lift_step": {
+          "observed": 92,
+          "not_observed_or_incomplete": 8,
+          "mean_steps": 45.47826086956522,
+          "median_steps": 43.5,
+          "min_steps": 36,
+          "max_steps": 84,
+          "mean_seconds": 2.273913043478261,
+          "median_seconds": 2.175
+        },
+        "first_lift_confirmation_step": {
+          "observed": 92,
+          "not_observed_or_incomplete": 8,
+          "mean_steps": 54.47826086956522,
+          "median_steps": 52.5,
+          "min_steps": 45,
+          "max_steps": 93,
+          "mean_seconds": 2.723913043478261,
+          "median_seconds": 2.625
+        }
+      },
+      "counts": {
+        "success_any": 92,
+        "stable_native_success_10_steps": 92,
+        "success_final": 92,
+        "first_lift_hold_success": 90
+      },
+      "wilson95": {
+        "success_any": [
+          0.8500189229905152,
+          0.9589065385156187
+        ],
+        "stable_native_success_10_steps": [
+          0.8500189229905152,
+          0.9589065385156187
+        ],
+        "success_final": [
+          0.8500189229905152,
+          0.9589065385156187
+        ],
+        "first_lift_hold_success": [
+          0.825634338495089,
+          0.9447708629393241
+        ]
+      },
+      "hold_status": {
+        "success": 90,
+        "height_condition_lost": 0,
+        "insufficient_window": 2,
+        "no_confirmed_lift": 8
+      },
+      "total_seconds": 1570.236939989998,
+      "batch_seconds": 1471.6367307730015,
+      "grid_seconds": 95.01854789999925,
+      "mean_lift_step": 45.47826086956522,
+      "median_lift_step": 43.5
+    },
+    "2": {
+      "lift_latency": {
+        "first_success_step": {
+          "observed": 93,
+          "not_observed_or_incomplete": 7,
+          "mean_steps": 44.97849462365591,
+          "median_steps": 43,
+          "min_steps": 36,
+          "max_steps": 67,
+          "mean_seconds": 2.248924731182796,
+          "median_seconds": 2.15
+        },
+        "first_lift_step": {
+          "observed": 93,
+          "not_observed_or_incomplete": 7,
+          "mean_steps": 44.97849462365591,
+          "median_steps": 43,
+          "min_steps": 36,
+          "max_steps": 67,
+          "mean_seconds": 2.248924731182796,
+          "median_seconds": 2.15
+        },
+        "first_lift_confirmation_step": {
+          "observed": 93,
+          "not_observed_or_incomplete": 7,
+          "mean_steps": 53.97849462365591,
+          "median_steps": 52,
+          "min_steps": 45,
+          "max_steps": 76,
+          "mean_seconds": 2.6989247311827955,
+          "median_seconds": 2.6
+        }
+      },
+      "counts": {
+        "success_any": 93,
+        "stable_native_success_10_steps": 93,
+        "success_final": 93,
+        "first_lift_hold_success": 91
+      },
+      "wilson95": {
+        "success_any": [
+          0.8625048526092675,
+          0.9656807389327268
+        ],
+        "stable_native_success_10_steps": [
+          0.8625048526092675,
+          0.9656807389327268
+        ],
+        "success_final": [
+          0.8625048526092675,
+          0.9656807389327268
+        ],
+        "first_lift_hold_success": [
+          0.8377378714728394,
+          0.9519274599974341
+        ]
+      },
+      "hold_status": {
+        "success": 91,
+        "height_condition_lost": 0,
+        "insufficient_window": 2,
+        "no_confirmed_lift": 7
+      },
+      "total_seconds": 1503.9880354590005,
+      "batch_seconds": 1403.7177290149993,
+      "grid_seconds": 95.92831511800068,
+      "mean_lift_step": 44.97849462365591,
+      "median_lift_step": 43.0
+    },
+    "5": {
+      "lift_latency": {
+        "first_success_step": {
+          "observed": 91,
+          "not_observed_or_incomplete": 9,
+          "mean_steps": 42.75824175824176,
+          "median_steps": 42,
+          "min_steps": 37,
+          "max_steps": 69,
+          "mean_seconds": 2.137912087912088,
+          "median_seconds": 2.1
+        },
+        "first_lift_step": {
+          "observed": 91,
+          "not_observed_or_incomplete": 9,
+          "mean_steps": 42.75824175824176,
+          "median_steps": 42,
+          "min_steps": 37,
+          "max_steps": 69,
+          "mean_seconds": 2.137912087912088,
+          "median_seconds": 2.1
+        },
+        "first_lift_confirmation_step": {
+          "observed": 91,
+          "not_observed_or_incomplete": 9,
+          "mean_steps": 51.75824175824176,
+          "median_steps": 51,
+          "min_steps": 46,
+          "max_steps": 78,
+          "mean_seconds": 2.587912087912088,
+          "median_seconds": 2.55
+        }
+      },
+      "counts": {
+        "success_any": 91,
+        "stable_native_success_10_steps": 91,
+        "success_final": 90,
+        "first_lift_hold_success": 89
+      },
+      "wilson95": {
+        "success_any": [
+          0.8377378714728394,
+          0.9519274599974341
+        ],
+        "stable_native_success_10_steps": [
+          0.8377378714728394,
+          0.9519274599974341
+        ],
+        "success_final": [
+          0.825634338495089,
+          0.9447708629393241
+        ],
+        "first_lift_hold_success": [
+          0.8136870349691994,
+          0.9374580364293534
+        ]
+      },
+      "hold_status": {
+        "success": 89,
+        "height_condition_lost": 1,
+        "insufficient_window": 1,
+        "no_confirmed_lift": 9
+      },
+      "total_seconds": 1427.3350121629992,
+      "batch_seconds": 1326.819638990999,
+      "grid_seconds": 97.52048413500052,
+      "mean_lift_step": 42.75824175824176,
+      "median_lift_step": 42.0
+    }
+  },
+  "paired": {
+    "h1_vs_h5": {
+      "success_any": {
+        "gained": [
+          11,
+          84,
+          95
+        ],
+        "lost": [
+          32,
+          96
+        ],
+        "delta_percentage_points": 1,
+        "mcnemar_exact_p": 1.0
+      },
+      "stable_native_success_10_steps": {
+        "gained": [
+          11,
+          84,
+          95
+        ],
+        "lost": [
+          32,
+          96
+        ],
+        "delta_percentage_points": 1,
+        "mcnemar_exact_p": 1.0
+      },
+      "success_final": {
+        "gained": [
+          11,
+          84,
+          95
+        ],
+        "lost": [
+          96
+        ],
+        "delta_percentage_points": 2,
+        "mcnemar_exact_p": 0.625
+      },
+      "first_lift_hold_success": {
+        "gained": [
+          11,
+          84,
+          95
+        ],
+        "lost": [
+          37,
+          96
+        ],
+        "delta_percentage_points": 1,
+        "mcnemar_exact_p": 1.0
+      }
+    },
+    "h2_vs_h5": {
+      "success_any": {
+        "gained": [
+          11,
+          84,
+          95
+        ],
+        "lost": [
+          91
+        ],
+        "delta_percentage_points": 2,
+        "mcnemar_exact_p": 0.625
+      },
+      "stable_native_success_10_steps": {
+        "gained": [
+          11,
+          84,
+          95
+        ],
+        "lost": [
+          91
+        ],
+        "delta_percentage_points": 2,
+        "mcnemar_exact_p": 0.625
+      },
+      "success_final": {
+        "gained": [
+          11,
+          32,
+          84,
+          95
+        ],
+        "lost": [
+          91
+        ],
+        "delta_percentage_points": 3,
+        "mcnemar_exact_p": 0.375
+      },
+      "first_lift_hold_success": {
+        "gained": [
+          11,
+          84,
+          95
+        ],
+        "lost": [
+          37
+        ],
+        "delta_percentage_points": 2,
+        "mcnemar_exact_p": 0.625
+      }
+    },
+    "h2_vs_h1": {
+      "success_any": {
+        "gained": [
+          32,
+          96
+        ],
+        "lost": [
+          91
+        ],
+        "delta_percentage_points": 1,
+        "mcnemar_exact_p": 1.0
+      },
+      "stable_native_success_10_steps": {
+        "gained": [
+          32,
+          96
+        ],
+        "lost": [
+          91
+        ],
+        "delta_percentage_points": 1,
+        "mcnemar_exact_p": 1.0
+      },
+      "success_final": {
+        "gained": [
+          32,
+          96
+        ],
+        "lost": [
+          91
+        ],
+        "delta_percentage_points": 1,
+        "mcnemar_exact_p": 1.0
+      },
+      "first_lift_hold_success": {
+        "gained": [
+          96
+        ],
+        "lost": [],
+        "delta_percentage_points": 1,
+        "mcnemar_exact_p": 1.0
+      }
+    }
+  },
+  "note": "每组单次100固定开发初态；配对精确McNemar检验未作多重比较校正。计时单次，不能推断稳定加速比。"
+}

@@ -99,19 +99,23 @@ def parse_args(batch=False):
     parser.add_argument("--output", type=Path, required=True, help="独立实验目录，不复用已有逐轮目录")
     parser.add_argument("--checkpoint", type=Path, default=None)
     parser.add_argument("--steps", type=int)
+    parser.add_argument("--execution-horizon", type=int,
+                        help="每次预测后执行的动作步数H；覆盖YAML，须为正整数且不超过checkpoint预测长度K")
     if not batch:
         parser.add_argument("--worker-indices", help="内部：同一worker顺序评测的索引列表")
         parser.add_argument("--index", type=int, default=int(os.environ.get("EVAL_INDEX", "0")))
     args = parser.parse_args()
     args.settings = load_config(args.config)
     e = args.settings["eval"]
-    for name in ["policy", "steps", "checkpoint", "initial_states"]:
+    for name in ["policy", "steps", "checkpoint", "initial_states", "execution_horizon"]:
         value = getattr(args, name)
         key = name
         if value is not None:
             e[key] = str(value) if isinstance(value, Path) else value
         else:
             setattr(args, name, Path(e[key]) if name == "checkpoint" else e[key])
+    if e["execution_horizon"] <= 0:
+        parser.error("--execution-horizon 须为正整数")
     if args.steps < round(e["metric_hold_seconds"] * 20):
         parser.error("推理步数少于保持评价所需步数")
     return args
