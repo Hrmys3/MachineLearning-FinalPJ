@@ -115,7 +115,7 @@ def main():
             config_path = path.with_suffix('.yaml')
             config_path.write_text(yaml.safe_dump(config, sort_keys=False, allow_unicode=True))
             load_config(config_path)
-            command = [sys.executable, 'scripts/lift/train/train_act_lift20.py' if args.kind == 'train'
+            command = [sys.executable, 'scripts/lift/train/train_act_lift.py' if args.kind == 'train'
                        else 'scripts/lift/eval/run_act_validation.py', '--config', str(config_path)]
             if args.kind == 'eval':
                 command += ['--output', str(path)]

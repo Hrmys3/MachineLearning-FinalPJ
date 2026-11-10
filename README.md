@@ -122,12 +122,26 @@ python scripts/lift/tools/adapt_act.py
 
 ```bash
 ACT_PRETRAINED=0 python scripts/lift/train/train_act_smoke.py
-ACT_PRETRAINED=1 python scripts/lift/train/train_act_lift20.py
+ACT_PRETRAINED=1 python scripts/lift/train/train_act_lift.py
 ```
 
 `ACT_PRETRAINED=1` 在创建模型时加载 ImageNet 视觉骨干权重；`0` 表示不加载该初始化。训练参数和输出目录统一在 `configs/lift/default.yaml`，也可通过 `--config configs/lift/your_experiment.yaml` 指定配置副本。
 
-训练入口拒绝复用已有输出目录；修改配置中的 `train.output` 开始独立实验。已有基线 checkpoint 不会被覆盖。
+训练入口拒绝复用已有输出目录；修改配置中的 `train.output` 开始独立实验。已有基线 checkpoint 不会被覆盖。训练入口支持 `--budget 20|50` 和 `--output DIR` 覆盖YAML，实际值写入训练 `config.json`。例如只新增50条示范模型：
+
+```bash
+ACT_PRETRAINED=1 python scripts/lift/train/train_act_lift.py \
+  --budget 50 --output outputs/lift/act_lift50_s42_v1
+```
+
+训练后固定H=2评测：
+
+```bash
+MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/lift/eval/run_act_validation.py \
+  --policy act_hold --execution-horizon 2 \
+  --checkpoint outputs/lift/act_lift50_s42_v1/checkpoint.pt \
+  --output outputs/lift/act_lift50_s42_h2_random100_v1
+```
 
 ## 推理与评测
 
@@ -256,7 +270,7 @@ video:
   auto_make_grids: true
 ```
 
-训练运行 `ACT_PRETRAINED=1 python scripts/lift/train/train_act_lift20.py`；评测运行 `MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/lift/eval/run_act_validation.py --policy act_hold --output outputs/lift/act_hold_optimized_v1`。评测checkpoint路径仍须指向希望评价的实际模型；纯ACT使用 `--policy act`。以上配置示例没有自动修改默认值，混合精度和编译需单独核对效果。
+训练运行 `ACT_PRETRAINED=1 python scripts/lift/train/train_act_lift.py`；评测运行 `MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/lift/eval/run_act_validation.py --policy act_hold --output outputs/lift/act_hold_optimized_v1`。评测checkpoint路径仍须指向希望评价的实际模型；纯ACT使用 `--policy act`。以上配置示例没有自动修改默认值，混合精度和编译需单独核对效果。
 
 自动对照使用相同任务、独立输出与交替顺序：
 

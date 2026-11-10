@@ -61,3 +61,7 @@ python experiments/lift/h_compare_v1/analyze.py --input outputs/lift/h_compare_v
 3. 训练过程加入基于训练验证集的周期checkpoint选择，比较固定末次checkpoint与预先规定的验证选择；不要凭random100成败挑选后称独立测试。
 4. 持续失败若仍集中在定位/夹持覆盖，可从训练分布增加纠正示范，并补末端姿态、手指—物体及桌面接触日志。不要直接在这批开发失败初态训练后报告其为泛化。
 5. 方案选定后冻结参数，另建未调参测试初态版本。原有H1/H2/H5保持原样，不覆盖，不把开发集重复选择当独立证据。
+
+## 执行计划调整（2026-11-11）
+
+用户决定不重训20条模型，先只训练50条seed42、2000更新的新模型。通用入口为scripts/lift/train/train_act_lift.py，使用--budget 50 --output outputs/lift/act_lift50_s42_v1；评测固定H2、同一random100、ACT+保持、100步，输出outputs/lift/act_lift50_s42_h2_random100_v1。参考为现有20条模型和h_compare_v1/h2，不覆盖历史模型。此前多种子双预算重训为更严格的后续方案，不再是本轮执行要求；历史训练实现差异限制对数据量因果收益的解释。当前仅更新入口与计划，未新训模型。

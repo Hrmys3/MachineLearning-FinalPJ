@@ -98,11 +98,22 @@ def masked_l1(prediction, actions, is_pad):
     return (prediction - actions).abs()[valid].mean()
 
 
-def main():
+def parse_training_config():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=Path("configs/lift/default.yaml"))
+    parser.add_argument("--budget", type=int, choices=[20, 50], help="训练示范条数；覆盖train.budget")
+    parser.add_argument("--output", type=Path, help="新训练输出目录；覆盖train.output")
     cli = parser.parse_args()
     config = load_config(cli.config)
+    if cli.budget is not None:
+        config['train']['budget'] = cli.budget
+    if cli.output is not None:
+        config['train']['output'] = str(cli.output)
+    return config
+
+
+def main():
+    config = parse_training_config()
     t, m = config["train"], config["model"]
     output = Path(t["output"])
     if output.exists():

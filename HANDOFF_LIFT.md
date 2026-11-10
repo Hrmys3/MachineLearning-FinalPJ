@@ -444,3 +444,13 @@ H1/H2均救回11/84/95；H2新增any失败91、保持失败37（晚抬升）；H
 逐轮已有first_success_step、first_lift_step、first_lift_confirmation_step，本次新增metrics.json/lift_latency汇总（均值/中位数/范围/秒数和观测/未观测数）。仅对已观测轮次计算，失败不填100步，空数据为null；不同成功样本构成须谨慎比较。离线分析脚本同步输出三项汇总，历史运行文件未改。新增边界测试并运行Lift测试，详见提交时验证结果；不重跑训练或仿真，不push或发布。
 
 本次完成验证：Lift unittest 14项全部通过，H三组300轮只读复算通过，git diff --check通过。提交范围包括已有H CLI、用户当前默认加速值及CLI注释、失败/H分析记录、新增时延汇总与测试。当前默认YAML仍含相同值的precision/compile_model重复键，读取有效值不变，本次未为整理擅改用户配置；新实验使用冻结解析值。
+
+## 通用训练入口与50条训练计划（2026-11-11）
+
+按用户要求将scripts/lift/train/train_act_lift20.py及包实现改名为train_act_lift.py，不保留旧入口；更新测速调用、测试和README。新增--budget 20|50、--output DIR，命令行覆盖YAML后再记录训练config.json；不传沿用YAML，仍拒绝已有输出目录。
+
+当前执行计划替代此前“重训20/50配对”的建议：只新训50条seed42、2000更新，输出outputs/lift/act_lift50_s42_v1；使用H2评测到outputs/lift/act_lift50_s42_h2_random100_v1，对照现有20条checkpoint及outputs/lift/h_compare_v1/h2。保留两预算各自训练统计量。现有20条模型不重训，因此是新模型相对历史模型的开发比较，训练实现/环境差异仍需核对，不能直接归因全部提升为数据量。尚未开始该训练或评测，不发布或push。
+
+## 50条模型评测完成分析（2026-11-11）
+
+用户已完成50条seed42、2000更新（0跳过），训练289.19秒；checkpoint b990a45c2b664f6686e70af5e9ac80248f67b792fc05e589ae86f3f24b351fe8。H2/random100评测98/98/98/94（any/stable/final/hold），全部正常；相对旧20条/H2的93/93/93/91，救回旧7个未抬升，新增11/56未抬升；13/75/94/99晚抬升窗口不足，无高度中断。200份CSV指标复算一致，评测参数除模型外相同，快照仅批量时延汇总改变。共同91成功初态平均提前1.3846步；保持配对p=0.6072，尚不能称显著提升。历史训练实现差异与单种子限制数据量因果解释，验证L1因训练统计量不同不能直接比较物理误差。详见experiments/lift/budget50_h2_v1/REPORT.md。建议先看11/56/75过程，再单独比较50条较长训练预算与验证checkpoint方案，不改写当前保持协议。仅分析，未新运行训练/仿真，未commit、push或发布。

@@ -84,7 +84,7 @@ class SpeedTests(unittest.TestCase):
         original_threads = torch.get_num_threads()
         torch.set_num_threads(1)
         try:
-            path = ROOT/'src/mlpj/lift/train/train_act_lift20.py'
+            path = ROOT/'src/mlpj/lift/train/train_act_lift.py'
             spec = importlib.util.spec_from_file_location('train_speed_test', path)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)

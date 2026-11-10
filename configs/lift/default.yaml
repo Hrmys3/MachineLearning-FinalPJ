@@ -42,7 +42,7 @@ model:
   - 128
   - 128
 train:
-  budget: 20  # 20或50，自动配套训练统计量
+  budget: 20  # 20或50，自动配套训练统计量；训练CLI：--budget 20|50
   seed: 42
   updates: 2000  # 仅测速CLI：--updates N（默认200，覆盖此值）
   batch_size: 8
@@ -52,7 +52,7 @@ train:
   kl_weight: 10.0
   gradient_clip: 1.0
   pretrained_backbone: true  # ACT_PRETRAINED环境变量可覆盖
-  output: outputs/lift/act_lift20_config_v1  # 必须是新目录；仅训练测速由 --output DIR 派生各方案输出子目录；正式训练无 --output
+  output: outputs/lift/act_lift20_config_v1  # 必须是新目录；训练CLI：--output DIR；测速由 --output DIR 派生各方案输出子目录
   num_workers: 0
   pin_memory: false
   persistent_workers: false
