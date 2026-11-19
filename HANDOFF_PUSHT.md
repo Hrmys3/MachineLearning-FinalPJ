@@ -1,9 +1,19 @@
 # Push-T 项目交接
 
-更新于 2026-11-07。本文面向首次接手本项目的会话。课程项目已完成 Panda Lift 的初步实验，Push-T已完成环境与假策略单步验收、两条示范基础审计及CPU数据组件检查；真实ACT计算、正式训练和完整闭环尚未完成。Lift 的最新结果、配置与运行入口见 [HANDOFF_LIFT.md](HANDOFF_LIFT.md) 和 [README.md](README.md)。仓库工作约定见 [AGENTS.md](AGENTS.md)。
+更新于 2026-11-19。本文面向首次接手本项目的会话。课程项目已完成 Panda Lift 的初步实验，Push-T已完成环境与假策略单步验收、两条示范基础审计及CPU数据组件检查；真实ACT单批次计算已通过，短训练、正式训练和完整闭环尚未完成。Lift 的最新结果、配置与运行入口见 [HANDOFF_LIFT.md](HANDOFF_LIFT.md) 和 [README.md](README.md)。仓库工作约定见 [AGENTS.md](AGENTS.md)。
 
 历史目录重排已提交；本次用户明确授权更新文档、创建Push-T分支并提交相关未提交改动。下方阶段记录中的“当前”“未提交”和待办属于各自记录时间，接手以本节及最新进度为准；不改写既有实验来源提交。
 
+
+## 本次提交与验证（2026-11-19）
+
+用户要求提交当前更改。本次在pusht分支纳入单批次检查脚本、FixedPushTACTDataset、valid_act_losses、短训练诊断脚本及相应README/数据文档/交接。主代理重新完成掩码L1数值与梯度检查、真实固定帧重复一致性及末帧掩码、四个相关Python文件语法检查，均通过且CUDA未初始化；并读取单批次result.json确认历史一次更新和推理结果。短训练仍未执行，不把提交写成新训练结果。提交号以git log为准；无push/发布。RoboDojo本地已应用补丁保留，未另造子模块提交。下节的“未commit”指当时创建脚本阶段。
+
+## 最新增量：短训练脚本已创建并通过语法检查（2026-11-19）
+
+用户授权执行上一条给出的命令。检查发现`scripts/pusht/train/train_act_smoke.py`尚未保存，因此主代理先按对话代码创建，再使用已有仿真环境Python执行`python -m py_compile scripts/pusht/train/train_act_smoke.py`，退出码0、无输出。版本字符串显式转换为普通str后写YAML，避免TorchVersion对象序列化问题。默认20次更新的诊断脚本已存在，但本次只检查语法，没有训练、GPU占用、checkpoint或新的损失结果。下一步执行前仍须实时核验空闲GPU，指定新的输出目录。原有用户修改和未跟踪文件保持；未commit、push或发布。
+
+此前用户已反馈真实ACT单批次检查通过，证据`outputs/pusht/checks/act_batch_ukd37nn7/`：一次更新、非零有限梯度、参数变化、推理(1,50,14)，PyTorch峰值约1513.5MiB，退出后GPU4回到1MiB/0%；固定样本数据集与有效元素平均L1也已按指导检查通过。下方11月7日的“尚未创建/执行单批次检查”属于历史状态。短训练与checkpoint重载仍未执行。
 
 ## 最新接手状态：示范审计、CPU数据接口与pusht分支（2026-11-07）
 

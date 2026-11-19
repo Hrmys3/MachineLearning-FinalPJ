@@ -36,3 +36,28 @@ class PushTACTDataset(Dataset):
         episode_id = self.episode_ids[index]
         timestep = int(np.random.randint(len(self.episodes[episode_id][0])))
         return self.get_at(episode_id, timestep)
+
+
+class FixedPushTACTDataset(Dataset):
+    """在指定的(episode_id, timestep)位置取样。"""
+
+    def __init__(self, dataset, positions):
+        self.dataset = dataset
+        self.positions = list(positions)
+        if not self.positions:
+            raise ValueError("取样位置不能为空")
+        for episode_id, timestep in self.positions:
+            if episode_id not in dataset.episodes:
+                raise ValueError(f"episode {episode_id} 不在数据集中")
+            length = len(dataset.episodes[episode_id][0])
+            if not isinstance(timestep, (int, np.integer)):
+                raise ValueError("timestep必须为整数")
+            if not 0 <= timestep < length:
+                raise ValueError(f"episode {episode_id}: timestep超出范围")
+
+    def __len__(self):
+        return len(self.positions)
+
+    def __getitem__(self, index):
+        episode_id, timestep = self.positions[index]
+        return self.dataset.get_at(episode_id, timestep)

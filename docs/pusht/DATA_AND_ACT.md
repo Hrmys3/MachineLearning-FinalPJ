@@ -57,7 +57,7 @@ PY
 - 输入图像/state[t]与action[t:]配对，不再额外移位。动作块长度由horizon指定，检查使用50；没有确定正式每次执行长度或完整评测协议。
 - `compute_norm_stats(episodes, train_ids)`仅拼接指定编号的真实帧，以float64计算，样本标准差ddof=1，下限1e-2，输出float32的qpos/action mean/std。各真实帧等权，不做末帧重复填充。
 - `slice_action_chunk`返回float32动作和布尔is_pad；True为填充。组合样本归一化后将填充动作置零，必须在损失中使用掩码。
-- `PushTACTDataset`按传入episode列表定义长度；训练采样每次在所选episode中随机取时间点。`get_at(id,t)`用于确定性检查；验证时随机采样策略尚需在训练入口中明确和冻结。
+- `PushTACTDataset`按传入episode列表定义长度；训练采样每次在所选episode中随机取时间点。`get_at(id,t)`用于确定性检查；`FixedPushTACTDataset`按显式(episode_id,timestep)列表取样。短训练诊断固定验证帧，并在fork_rng内重设随机种子、验证后恢复随机状态。正式验证协议仍需单独冻结。
 - 当前函数要求调用方传入统计量和编号，尚未自动加载/校验固定划分或核对所有HDF5校验值；正式入口必须承担这些检查。
 
 用户已完成合成数据上的动作索引/掩码和训练范围统计检查；真实两条轨迹读取、图像、组合样本、反归一化和CPU Dataset/DataLoader检查通过。t=12动作块有50项有效；第0条t=358有1项有效、49项padding。batch=2输出为images(2,3,3,480,640)、qpos(2,14)、actions(2,50,14)、is_pad(2,50)，前三者float32，掩码bool，均在CPU。
@@ -81,6 +81,12 @@ PY
 
 用户要求常规推进采用“教用户操作—用户反馈—再给下一步”，未经明确授权不代为执行数据处理、训练或仿真；本次文档更新与Git提交已获明确授权。每次使用GPU前重新检查实时UUID、显存和利用率，历史快照不可复用。
 
-当前仅成功导入ACTPolicy、train_bc、forward_pass，版本torch2.7.0+cu126、torchvision0.22.0+cu126；这不等于模型计算通过。对话提出的`check_act_batch.py`尚未创建和执行，不是可运行仓库入口，也无其结果。下一步先准备和执行单批次真实数据前向/损失/反向/更新/推理检查，再将自有Dataset接入训练入口、固定验证采样与训练统计量来源，并记录冻结配置/源码/校验值；之后再准备完整训练预算和闭环。尚无Push-T训练权重、成功率或保留集结果。
+用户已执行`scripts/pusht/checks/check_act_batch.py`，证据`outputs/pusht/checks/act_batch_ukd37nn7/`为ok:true：单样本、三路原尺寸图像、50步动作块，完成一次优化器更新和(1,50,14)推理；参数变化约1e-5，PyTorch峰值1513.5MiB。使用0/1两条诊断统计量，没有保存checkpoint；记录中的config.batch_size=2是未使用的解析器默认值，实际batch size为1。此样本没有padding，因此不受下面损失修正影响。
+
+`src/mlpj/pusht/act_training.py`的`valid_act_losses`将固定上游ACT的masked L1从包含填充位置的分母换算为有效元素平均；必须只转换一次，掩码长度必须匹配模型动作块。合成CPU检查中，50个/1个有效动作的相同误差均得到L1=2，填充梯度为0。
+
+`scripts/pusht/train/train_act_smoke.py`现已创建，默认20次更新、batch size 1、有效元素平均L1、KL权重10、梯度裁剪1、无AMP。仅episode 0参与训练/统计量，episode 1是诊断验证，仍属于正式训练池。验证使用固定帧与fork_rng种子1000；保存parameters.yaml、源码、逐次指标、best/last模型及统计量，并计划检查最后模型重载的推理一致性。best允许在第0次更新被选中；该目录没有用于断点续训的优化器状态。完整GPU流程尚未执行，目前仅语法及相关CPU组件通过，不能称checkpoint重载已验收。运行命令见根README。
+
+下一步实时检查GPU后执行短训练诊断，核对有限损失、更新次数、checkpoint与统计量重载，再准备正式预算数据、训练入口和完整闭环。尚无正式Push-T训练权重、成功率或保留集结果。
 
 Push-T不导入Lift代码；独立维护机器人、25Hz控制、相机、14维动作、环境依赖与实验资源。mlpj包壳、common、根文档和Git历史仍共享。`pusht`分支隔离开发历史，不能隔离本机Python环境、资源文件或GPU，细则见[结构说明](../REPOSITORY_LAYOUT.md)。

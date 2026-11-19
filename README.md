@@ -1,6 +1,6 @@
 # 机器人模仿学习：Lift 与 Push-T
 
-Lift 使用 MuJoCo、robosuite、Panda、RoboMimic PH 示范和适配后的官方 ACT。Push-T 使用独立的 RoboDojo / Isaac Sim 环境检查入口，策略集成依赖 XPolicyLab；尚无可运行的 Push-T 训练或评测入口。以下训练与评测命令用于 Lift。
+Lift 使用 MuJoCo、robosuite、Panda、RoboMimic PH 示范和适配后的官方 ACT。Push-T 使用独立的 RoboDojo / Isaac Sim 环境检查入口，策略集成依赖 XPolicyLab；提供独立的诊断训练入口，尚无正式训练或完整闭环评测入口。以下训练与评测命令用于 Lift。
 
 ## 目录结构
 
@@ -100,6 +100,17 @@ for episode_id, (state, action) in load_joint_episodes(base, [0, 1]).items():
     print(episode_id, state.shape, action.shape)
 PY
 ```
+
+单批次模型计算检查入口为 `scripts/pusht/checks/check_act_batch.py`。短训练诊断入口使用episode 0训练及计算统计量，episode 1做固定帧流程验证；两条示范在正式划分中仍属于训练池，其结果不能当作valid20成绩。使用前重新检查GPU实时空闲，并指定新的输出目录：
+
+```bash
+nvidia-smi --query-gpu=index,uuid,memory.used,utilization.gpu --format=csv
+python scripts/pusht/train/train_act_smoke.py \
+  --gpu-uuid <GPU_UUID> --output outputs/pusht/act_smoke_new \
+  --updates 20 --val-every 10
+```
+
+短训练脚本冻结配置与源码、按有效动作元素平均L1、固定验证帧和验证随机数，并检查checkpoint保存和重载；当前仅经过语法及相关CPU组件检查，完整GPU短训练待执行。
 
 此接口尚未接入正式训练入口。上游 ACT 的原入口包含额外动作移位、全数据统计及连续编号假设，不能直接作为本项目的固定划分训练入口。下载、数据契约、检查范围和下一步见 [Push-T 数据与 ACT 适配](docs/pusht/DATA_AND_ACT.md)。下文的数据准备、ACT源码、训练和评测命令均属于 Lift。
 
