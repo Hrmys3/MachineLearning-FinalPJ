@@ -27,13 +27,15 @@ def load_config(path=DEFAULT_CONFIG):
                   'prefetch_factor': 2, 'cache_mode': 'none', 'non_blocking_transfer': False,
                   'precision': 'fp32', 'compile_model': False},
         'eval': {'precision': 'fp32', 'inference_mode': False, 'compile_model': False,
-                 'num_workers': 1, 'episodes_per_worker': 1, 'episode_limit': None},
+                 'num_workers': 1, 'episodes_per_worker': 1, 'episode_limit': None,
+                 'episode_ids': None, 'phase_diagnostics': False},
         'video': {'save_rollout': True, 'frame_stride': 1, 'auto_make_grids': True},
     }
     for group, values in defaults.items():
         for key, value in values.items():
             config.setdefault(group, {}).setdefault(key, value)
     e, r, m, t = (config[k] for k in ['eval', 'random_set', 'model', 'train'])
+    validate_diagnostics(e)
     if e['control_freq'] != 20:
         raise ValueError('当前PH动作语义只验证20Hz，禁止直接修改control_freq')
     for value in [r['count'], e['steps'], e['execution_horizon'], e['hold_trigger_steps'],
@@ -84,3 +86,14 @@ def load_config(path=DEFAULT_CONFIG):
     if perf['torch_threads'] is not None and (not isinstance(perf['torch_threads'], int) or perf['torch_threads'] < 1):
         raise ValueError('torch_threads须为正整数或null')
     return config
+
+
+def validate_diagnostics(settings):
+    ids = settings['episode_ids']
+    if not isinstance(settings['phase_diagnostics'], bool):
+        raise ValueError('phase_diagnostics须为布尔值')
+    if ids is not None:
+        if not isinstance(ids, list) or not ids or any(type(i) is not int or i < 0 for i in ids) or len(set(ids)) != len(ids):
+            raise ValueError('episode_ids须为非空、不重复的非负整数列表')
+        if settings['episode_limit'] is not None:
+            raise ValueError('episode_ids不能与episode_limit同时使用')

@@ -28,6 +28,8 @@ eval:
   episodes_per_worker: 10   # >1复用模型；环境每轮重建，定期重启隔离故障
   precision: fp32
   compile_model: false
+  phase_diagnostics: false  # 评测CLI：--phase-diagnostics；只记录，不改变控制
+  episode_ids: null  # 评测CLI：--episode-ids 11,56；实际初态编号，不能与episode_limit同时使用
   episode_limit: null       # 测速可取前N个固定初态，不改变冻结集本身；仅测速CLI：--episodes N（默认10，覆盖此值）
 model:
   chunk_size: 20

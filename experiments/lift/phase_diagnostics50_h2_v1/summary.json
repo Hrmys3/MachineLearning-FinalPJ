@@ -1,0 +1,2061 @@
+{
+  "episodes": [
+    {
+      "episode_id": 0,
+      "predictions": 24,
+      "full_block_all_negative": 7,
+      "blocks_with_closing": 17,
+      "blocks_with_executed_closing": 10,
+      "blocks_closing_only_beyond_H": 7,
+      "late_blocks_30_to_80": 9,
+      "late_blocks_with_closing": 9,
+      "late_blocks_closing_beyond_H": 0,
+      "first_ACT_positive_step": 30,
+      "positive_ACT_steps": 19,
+      "ACT_sign_reversals": 1,
+      "contact_step_counts": {
+        "left_finger_cube": 65,
+        "left_finger_table": 2,
+        "right_finger_cube": 65,
+        "right_finger_table": 0,
+        "left_fingerpad_cube": 65,
+        "left_fingerpad_table": 0,
+        "right_fingerpad_cube": 65,
+        "right_fingerpad_table": 0
+      },
+      "both_fingerpads_cube_steps": 65,
+      "first_both_fingerpads_cube_step": 36,
+      "first_finger_table_step": 31,
+      "last_finger_table_step": 32,
+      "same_future_gripper_sign_conflict_fraction": 0.012077294685990338,
+      "deferred_closing_comparisons": 6,
+      "positive_deferred_closing_postponements": 1,
+      "first_lift_step": 39,
+      "hold_status": "success",
+      "closing_offsets": [
+        {
+          "t": 0,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 2,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 4,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 6,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 8,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 10,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 12,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 14,
+          "r_g": 18,
+          "predicted_step": 33
+        },
+        {
+          "t": 16,
+          "r_g": 14,
+          "predicted_step": 31
+        },
+        {
+          "t": 18,
+          "r_g": 11,
+          "predicted_step": 30
+        },
+        {
+          "t": 20,
+          "r_g": 9,
+          "predicted_step": 30
+        },
+        {
+          "t": 22,
+          "r_g": 6,
+          "predicted_step": 29
+        },
+        {
+          "t": 24,
+          "r_g": 5,
+          "predicted_step": 30
+        },
+        {
+          "t": 26,
+          "r_g": 3,
+          "predicted_step": 30
+        },
+        {
+          "t": 28,
+          "r_g": 1,
+          "predicted_step": 30
+        },
+        {
+          "t": 30,
+          "r_g": 0,
+          "predicted_step": 31
+        },
+        {
+          "t": 32,
+          "r_g": 0,
+          "predicted_step": 33
+        },
+        {
+          "t": 34,
+          "r_g": 0,
+          "predicted_step": 35
+        },
+        {
+          "t": 36,
+          "r_g": 0,
+          "predicted_step": 37
+        },
+        {
+          "t": 38,
+          "r_g": 0,
+          "predicted_step": 39
+        },
+        {
+          "t": 40,
+          "r_g": 0,
+          "predicted_step": 41
+        },
+        {
+          "t": 42,
+          "r_g": 0,
+          "predicted_step": 43
+        },
+        {
+          "t": 44,
+          "r_g": 0,
+          "predicted_step": 45
+        },
+        {
+          "t": 46,
+          "r_g": 0,
+          "predicted_step": 47
+        }
+      ]
+    },
+    {
+      "episode_id": 11,
+      "predictions": 50,
+      "full_block_all_negative": 6,
+      "blocks_with_closing": 44,
+      "blocks_with_executed_closing": 0,
+      "blocks_closing_only_beyond_H": 44,
+      "late_blocks_30_to_80": 26,
+      "late_blocks_with_closing": 26,
+      "late_blocks_closing_beyond_H": 26,
+      "first_ACT_positive_step": null,
+      "positive_ACT_steps": 0,
+      "ACT_sign_reversals": 0,
+      "contact_step_counts": {
+        "left_finger_cube": 0,
+        "left_finger_table": 68,
+        "right_finger_cube": 0,
+        "right_finger_table": 60,
+        "left_fingerpad_cube": 0,
+        "left_fingerpad_table": 0,
+        "right_fingerpad_cube": 0,
+        "right_fingerpad_table": 0
+      },
+      "both_fingerpads_cube_steps": 0,
+      "first_both_fingerpads_cube_step": null,
+      "first_finger_table_step": 28,
+      "last_finger_table_step": 100,
+      "same_future_gripper_sign_conflict_fraction": 0.0873015873015873,
+      "deferred_closing_comparisons": 43,
+      "positive_deferred_closing_postponements": 38,
+      "first_lift_step": null,
+      "hold_status": "no_confirmed_lift",
+      "closing_offsets": [
+        {
+          "t": 0,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 2,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 4,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 6,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 8,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 10,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 12,
+          "r_g": 16,
+          "predicted_step": 29
+        },
+        {
+          "t": 14,
+          "r_g": 15,
+          "predicted_step": 30
+        },
+        {
+          "t": 16,
+          "r_g": 13,
+          "predicted_step": 30
+        },
+        {
+          "t": 18,
+          "r_g": 11,
+          "predicted_step": 30
+        },
+        {
+          "t": 20,
+          "r_g": 10,
+          "predicted_step": 31
+        },
+        {
+          "t": 22,
+          "r_g": 9,
+          "predicted_step": 32
+        },
+        {
+          "t": 24,
+          "r_g": 8,
+          "predicted_step": 33
+        },
+        {
+          "t": 26,
+          "r_g": 6,
+          "predicted_step": 33
+        },
+        {
+          "t": 28,
+          "r_g": 4,
+          "predicted_step": 33
+        },
+        {
+          "t": 30,
+          "r_g": 4,
+          "predicted_step": 35
+        },
+        {
+          "t": 32,
+          "r_g": 4,
+          "predicted_step": 37
+        },
+        {
+          "t": 34,
+          "r_g": 4,
+          "predicted_step": 39
+        },
+        {
+          "t": 36,
+          "r_g": 4,
+          "predicted_step": 41
+        },
+        {
+          "t": 38,
+          "r_g": 4,
+          "predicted_step": 43
+        },
+        {
+          "t": 40,
+          "r_g": 5,
+          "predicted_step": 46
+        },
+        {
+          "t": 42,
+          "r_g": 5,
+          "predicted_step": 48
+        },
+        {
+          "t": 44,
+          "r_g": 5,
+          "predicted_step": 50
+        },
+        {
+          "t": 46,
+          "r_g": 4,
+          "predicted_step": 51
+        },
+        {
+          "t": 48,
+          "r_g": 5,
+          "predicted_step": 54
+        },
+        {
+          "t": 50,
+          "r_g": 4,
+          "predicted_step": 55
+        },
+        {
+          "t": 52,
+          "r_g": 5,
+          "predicted_step": 58
+        },
+        {
+          "t": 54,
+          "r_g": 5,
+          "predicted_step": 60
+        },
+        {
+          "t": 56,
+          "r_g": 5,
+          "predicted_step": 62
+        },
+        {
+          "t": 58,
+          "r_g": 5,
+          "predicted_step": 64
+        },
+        {
+          "t": 60,
+          "r_g": 6,
+          "predicted_step": 67
+        },
+        {
+          "t": 62,
+          "r_g": 6,
+          "predicted_step": 69
+        },
+        {
+          "t": 64,
+          "r_g": 6,
+          "predicted_step": 71
+        },
+        {
+          "t": 66,
+          "r_g": 7,
+          "predicted_step": 74
+        },
+        {
+          "t": 68,
+          "r_g": 7,
+          "predicted_step": 76
+        },
+        {
+          "t": 70,
+          "r_g": 7,
+          "predicted_step": 78
+        },
+        {
+          "t": 72,
+          "r_g": 7,
+          "predicted_step": 80
+        },
+        {
+          "t": 74,
+          "r_g": 7,
+          "predicted_step": 82
+        },
+        {
+          "t": 76,
+          "r_g": 7,
+          "predicted_step": 84
+        },
+        {
+          "t": 78,
+          "r_g": 7,
+          "predicted_step": 86
+        },
+        {
+          "t": 80,
+          "r_g": 7,
+          "predicted_step": 88
+        },
+        {
+          "t": 82,
+          "r_g": 7,
+          "predicted_step": 90
+        },
+        {
+          "t": 84,
+          "r_g": 7,
+          "predicted_step": 92
+        },
+        {
+          "t": 86,
+          "r_g": 7,
+          "predicted_step": 94
+        },
+        {
+          "t": 88,
+          "r_g": 7,
+          "predicted_step": 96
+        },
+        {
+          "t": 90,
+          "r_g": 7,
+          "predicted_step": 98
+        },
+        {
+          "t": 92,
+          "r_g": 7,
+          "predicted_step": 100
+        },
+        {
+          "t": 94,
+          "r_g": 8,
+          "predicted_step": 103
+        },
+        {
+          "t": 96,
+          "r_g": 7,
+          "predicted_step": 104
+        },
+        {
+          "t": 98,
+          "r_g": 5,
+          "predicted_step": 104
+        }
+      ]
+    },
+    {
+      "episode_id": 56,
+      "predictions": 50,
+      "full_block_all_negative": 8,
+      "blocks_with_closing": 42,
+      "blocks_with_executed_closing": 2,
+      "blocks_closing_only_beyond_H": 40,
+      "late_blocks_30_to_80": 26,
+      "late_blocks_with_closing": 26,
+      "late_blocks_closing_beyond_H": 24,
+      "first_ACT_positive_step": 44,
+      "positive_ACT_steps": 2,
+      "ACT_sign_reversals": 4,
+      "contact_step_counts": {
+        "left_finger_cube": 0,
+        "left_finger_table": 69,
+        "right_finger_cube": 0,
+        "right_finger_table": 70,
+        "left_fingerpad_cube": 0,
+        "left_fingerpad_table": 0,
+        "right_fingerpad_cube": 0,
+        "right_fingerpad_table": 0
+      },
+      "both_fingerpads_cube_steps": 0,
+      "first_both_fingerpads_cube_step": null,
+      "first_finger_table_step": 31,
+      "last_finger_table_step": 100,
+      "same_future_gripper_sign_conflict_fraction": 0.0782312925170068,
+      "deferred_closing_comparisons": 38,
+      "positive_deferred_closing_postponements": 32,
+      "first_lift_step": null,
+      "hold_status": "no_confirmed_lift",
+      "closing_offsets": [
+        {
+          "t": 0,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 2,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 4,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 6,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 8,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 10,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 12,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 14,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 16,
+          "r_g": 19,
+          "predicted_step": 36
+        },
+        {
+          "t": 18,
+          "r_g": 16,
+          "predicted_step": 35
+        },
+        {
+          "t": 20,
+          "r_g": 13,
+          "predicted_step": 34
+        },
+        {
+          "t": 22,
+          "r_g": 11,
+          "predicted_step": 34
+        },
+        {
+          "t": 24,
+          "r_g": 10,
+          "predicted_step": 35
+        },
+        {
+          "t": 26,
+          "r_g": 8,
+          "predicted_step": 35
+        },
+        {
+          "t": 28,
+          "r_g": 6,
+          "predicted_step": 35
+        },
+        {
+          "t": 30,
+          "r_g": 3,
+          "predicted_step": 34
+        },
+        {
+          "t": 32,
+          "r_g": 3,
+          "predicted_step": 36
+        },
+        {
+          "t": 34,
+          "r_g": 3,
+          "predicted_step": 38
+        },
+        {
+          "t": 36,
+          "r_g": 3,
+          "predicted_step": 40
+        },
+        {
+          "t": 38,
+          "r_g": 3,
+          "predicted_step": 42
+        },
+        {
+          "t": 40,
+          "r_g": 2,
+          "predicted_step": 43
+        },
+        {
+          "t": 42,
+          "r_g": 1,
+          "predicted_step": 44
+        },
+        {
+          "t": 44,
+          "r_g": 1,
+          "predicted_step": 46
+        },
+        {
+          "t": 46,
+          "r_g": 2,
+          "predicted_step": 49
+        },
+        {
+          "t": 48,
+          "r_g": 2,
+          "predicted_step": 51
+        },
+        {
+          "t": 50,
+          "r_g": 2,
+          "predicted_step": 53
+        },
+        {
+          "t": 52,
+          "r_g": 2,
+          "predicted_step": 55
+        },
+        {
+          "t": 54,
+          "r_g": 2,
+          "predicted_step": 57
+        },
+        {
+          "t": 56,
+          "r_g": 3,
+          "predicted_step": 60
+        },
+        {
+          "t": 58,
+          "r_g": 3,
+          "predicted_step": 62
+        },
+        {
+          "t": 60,
+          "r_g": 3,
+          "predicted_step": 64
+        },
+        {
+          "t": 62,
+          "r_g": 2,
+          "predicted_step": 65
+        },
+        {
+          "t": 64,
+          "r_g": 2,
+          "predicted_step": 67
+        },
+        {
+          "t": 66,
+          "r_g": 2,
+          "predicted_step": 69
+        },
+        {
+          "t": 68,
+          "r_g": 3,
+          "predicted_step": 72
+        },
+        {
+          "t": 70,
+          "r_g": 3,
+          "predicted_step": 74
+        },
+        {
+          "t": 72,
+          "r_g": 3,
+          "predicted_step": 76
+        },
+        {
+          "t": 74,
+          "r_g": 3,
+          "predicted_step": 78
+        },
+        {
+          "t": 76,
+          "r_g": 3,
+          "predicted_step": 80
+        },
+        {
+          "t": 78,
+          "r_g": 3,
+          "predicted_step": 82
+        },
+        {
+          "t": 80,
+          "r_g": 3,
+          "predicted_step": 84
+        },
+        {
+          "t": 82,
+          "r_g": 3,
+          "predicted_step": 86
+        },
+        {
+          "t": 84,
+          "r_g": 3,
+          "predicted_step": 88
+        },
+        {
+          "t": 86,
+          "r_g": 3,
+          "predicted_step": 90
+        },
+        {
+          "t": 88,
+          "r_g": 3,
+          "predicted_step": 92
+        },
+        {
+          "t": 90,
+          "r_g": 3,
+          "predicted_step": 94
+        },
+        {
+          "t": 92,
+          "r_g": 3,
+          "predicted_step": 96
+        },
+        {
+          "t": 94,
+          "r_g": 3,
+          "predicted_step": 98
+        },
+        {
+          "t": 96,
+          "r_g": 3,
+          "predicted_step": 100
+        },
+        {
+          "t": 98,
+          "r_g": 2,
+          "predicted_step": 101
+        }
+      ]
+    },
+    {
+      "episode_id": 2,
+      "predictions": 26,
+      "full_block_all_negative": 8,
+      "blocks_with_closing": 18,
+      "blocks_with_executed_closing": 10,
+      "blocks_closing_only_beyond_H": 8,
+      "late_blocks_30_to_80": 11,
+      "late_blocks_with_closing": 11,
+      "late_blocks_closing_beyond_H": 1,
+      "first_ACT_positive_step": 34,
+      "positive_ACT_steps": 19,
+      "ACT_sign_reversals": 1,
+      "contact_step_counts": {
+        "left_finger_cube": 61,
+        "left_finger_table": 3,
+        "right_finger_cube": 61,
+        "right_finger_table": 0,
+        "left_fingerpad_cube": 61,
+        "left_fingerpad_table": 0,
+        "right_fingerpad_cube": 61,
+        "right_fingerpad_table": 0
+      },
+      "both_fingerpads_cube_steps": 61,
+      "first_both_fingerpads_cube_step": 40,
+      "first_finger_table_step": 36,
+      "last_finger_table_step": 38,
+      "same_future_gripper_sign_conflict_fraction": 0.011111111111111112,
+      "deferred_closing_comparisons": 7,
+      "positive_deferred_closing_postponements": 2,
+      "first_lift_step": 43,
+      "hold_status": "success",
+      "closing_offsets": [
+        {
+          "t": 0,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 2,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 4,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 6,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 8,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 10,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 12,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 14,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 16,
+          "r_g": 18,
+          "predicted_step": 35
+        },
+        {
+          "t": 18,
+          "r_g": 14,
+          "predicted_step": 33
+        },
+        {
+          "t": 20,
+          "r_g": 13,
+          "predicted_step": 34
+        },
+        {
+          "t": 22,
+          "r_g": 10,
+          "predicted_step": 33
+        },
+        {
+          "t": 24,
+          "r_g": 8,
+          "predicted_step": 33
+        },
+        {
+          "t": 26,
+          "r_g": 6,
+          "predicted_step": 33
+        },
+        {
+          "t": 28,
+          "r_g": 5,
+          "predicted_step": 34
+        },
+        {
+          "t": 30,
+          "r_g": 3,
+          "predicted_step": 34
+        },
+        {
+          "t": 32,
+          "r_g": 1,
+          "predicted_step": 34
+        },
+        {
+          "t": 34,
+          "r_g": 0,
+          "predicted_step": 35
+        },
+        {
+          "t": 36,
+          "r_g": 0,
+          "predicted_step": 37
+        },
+        {
+          "t": 38,
+          "r_g": 0,
+          "predicted_step": 39
+        },
+        {
+          "t": 40,
+          "r_g": 0,
+          "predicted_step": 41
+        },
+        {
+          "t": 42,
+          "r_g": 0,
+          "predicted_step": 43
+        },
+        {
+          "t": 44,
+          "r_g": 0,
+          "predicted_step": 45
+        },
+        {
+          "t": 46,
+          "r_g": 0,
+          "predicted_step": 47
+        },
+        {
+          "t": 48,
+          "r_g": 0,
+          "predicted_step": 49
+        },
+        {
+          "t": 50,
+          "r_g": 0,
+          "predicted_step": 51
+        }
+      ]
+    },
+    {
+      "episode_id": 3,
+      "predictions": 31,
+      "full_block_all_negative": 8,
+      "blocks_with_closing": 23,
+      "blocks_with_executed_closing": 15,
+      "blocks_closing_only_beyond_H": 8,
+      "late_blocks_30_to_80": 16,
+      "late_blocks_with_closing": 16,
+      "late_blocks_closing_beyond_H": 1,
+      "first_ACT_positive_step": 34,
+      "positive_ACT_steps": 28,
+      "ACT_sign_reversals": 1,
+      "contact_step_counts": {
+        "left_finger_cube": 60,
+        "left_finger_table": 6,
+        "right_finger_cube": 66,
+        "right_finger_table": 0,
+        "left_fingerpad_cube": 60,
+        "left_fingerpad_table": 0,
+        "right_fingerpad_cube": 66,
+        "right_fingerpad_table": 0
+      },
+      "both_fingerpads_cube_steps": 60,
+      "first_both_fingerpads_cube_step": 41,
+      "first_finger_table_step": 35,
+      "last_finger_table_step": 40,
+      "same_future_gripper_sign_conflict_fraction": 0.016666666666666666,
+      "deferred_closing_comparisons": 7,
+      "positive_deferred_closing_postponements": 4,
+      "first_lift_step": 52,
+      "hold_status": "success",
+      "closing_offsets": [
+        {
+          "t": 0,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 2,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 4,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 6,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 8,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 10,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 12,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 14,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 16,
+          "r_g": 16,
+          "predicted_step": 33
+        },
+        {
+          "t": 18,
+          "r_g": 13,
+          "predicted_step": 32
+        },
+        {
+          "t": 20,
+          "r_g": 12,
+          "predicted_step": 33
+        },
+        {
+          "t": 22,
+          "r_g": 9,
+          "predicted_step": 32
+        },
+        {
+          "t": 24,
+          "r_g": 7,
+          "predicted_step": 32
+        },
+        {
+          "t": 26,
+          "r_g": 6,
+          "predicted_step": 33
+        },
+        {
+          "t": 28,
+          "r_g": 5,
+          "predicted_step": 34
+        },
+        {
+          "t": 30,
+          "r_g": 4,
+          "predicted_step": 35
+        },
+        {
+          "t": 32,
+          "r_g": 1,
+          "predicted_step": 34
+        },
+        {
+          "t": 34,
+          "r_g": 0,
+          "predicted_step": 35
+        },
+        {
+          "t": 36,
+          "r_g": 0,
+          "predicted_step": 37
+        },
+        {
+          "t": 38,
+          "r_g": 0,
+          "predicted_step": 39
+        },
+        {
+          "t": 40,
+          "r_g": 0,
+          "predicted_step": 41
+        },
+        {
+          "t": 42,
+          "r_g": 0,
+          "predicted_step": 43
+        },
+        {
+          "t": 44,
+          "r_g": 0,
+          "predicted_step": 45
+        },
+        {
+          "t": 46,
+          "r_g": 0,
+          "predicted_step": 47
+        },
+        {
+          "t": 48,
+          "r_g": 0,
+          "predicted_step": 49
+        },
+        {
+          "t": 50,
+          "r_g": 0,
+          "predicted_step": 51
+        },
+        {
+          "t": 52,
+          "r_g": 0,
+          "predicted_step": 53
+        },
+        {
+          "t": 54,
+          "r_g": 0,
+          "predicted_step": 55
+        },
+        {
+          "t": 56,
+          "r_g": 0,
+          "predicted_step": 57
+        },
+        {
+          "t": 58,
+          "r_g": 0,
+          "predicted_step": 59
+        },
+        {
+          "t": 60,
+          "r_g": 0,
+          "predicted_step": 61
+        }
+      ]
+    },
+    {
+      "episode_id": 13,
+      "predictions": 36,
+      "full_block_all_negative": 6,
+      "blocks_with_closing": 30,
+      "blocks_with_executed_closing": 18,
+      "blocks_closing_only_beyond_H": 12,
+      "late_blocks_30_to_80": 21,
+      "late_blocks_with_closing": 21,
+      "late_blocks_closing_beyond_H": 3,
+      "first_ACT_positive_step": 38,
+      "positive_ACT_steps": 35,
+      "ACT_sign_reversals": 1,
+      "contact_step_counts": {
+        "left_finger_cube": 70,
+        "left_finger_table": 12,
+        "right_finger_cube": 42,
+        "right_finger_table": 20,
+        "left_fingerpad_cube": 69,
+        "left_fingerpad_table": 0,
+        "right_fingerpad_cube": 42,
+        "right_fingerpad_table": 0
+      },
+      "both_fingerpads_cube_steps": 42,
+      "first_both_fingerpads_cube_step": 59,
+      "first_finger_table_step": 38,
+      "last_finger_table_step": 57,
+      "same_future_gripper_sign_conflict_fraction": 0.020634920634920634,
+      "deferred_closing_comparisons": 11,
+      "positive_deferred_closing_postponements": 6,
+      "first_lift_step": 63,
+      "hold_status": "insufficient_window",
+      "closing_offsets": [
+        {
+          "t": 0,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 2,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 4,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 6,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 8,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 10,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 12,
+          "r_g": 18,
+          "predicted_step": 31
+        },
+        {
+          "t": 14,
+          "r_g": 15,
+          "predicted_step": 30
+        },
+        {
+          "t": 16,
+          "r_g": 11,
+          "predicted_step": 28
+        },
+        {
+          "t": 18,
+          "r_g": 10,
+          "predicted_step": 29
+        },
+        {
+          "t": 20,
+          "r_g": 8,
+          "predicted_step": 29
+        },
+        {
+          "t": 22,
+          "r_g": 6,
+          "predicted_step": 29
+        },
+        {
+          "t": 24,
+          "r_g": 4,
+          "predicted_step": 29
+        },
+        {
+          "t": 26,
+          "r_g": 3,
+          "predicted_step": 30
+        },
+        {
+          "t": 28,
+          "r_g": 3,
+          "predicted_step": 32
+        },
+        {
+          "t": 30,
+          "r_g": 3,
+          "predicted_step": 34
+        },
+        {
+          "t": 32,
+          "r_g": 4,
+          "predicted_step": 37
+        },
+        {
+          "t": 34,
+          "r_g": 3,
+          "predicted_step": 38
+        },
+        {
+          "t": 36,
+          "r_g": 1,
+          "predicted_step": 38
+        },
+        {
+          "t": 38,
+          "r_g": 0,
+          "predicted_step": 39
+        },
+        {
+          "t": 40,
+          "r_g": 0,
+          "predicted_step": 41
+        },
+        {
+          "t": 42,
+          "r_g": 0,
+          "predicted_step": 43
+        },
+        {
+          "t": 44,
+          "r_g": 0,
+          "predicted_step": 45
+        },
+        {
+          "t": 46,
+          "r_g": 0,
+          "predicted_step": 47
+        },
+        {
+          "t": 48,
+          "r_g": 0,
+          "predicted_step": 49
+        },
+        {
+          "t": 50,
+          "r_g": 0,
+          "predicted_step": 51
+        },
+        {
+          "t": 52,
+          "r_g": 0,
+          "predicted_step": 53
+        },
+        {
+          "t": 54,
+          "r_g": 0,
+          "predicted_step": 55
+        },
+        {
+          "t": 56,
+          "r_g": 0,
+          "predicted_step": 57
+        },
+        {
+          "t": 58,
+          "r_g": 0,
+          "predicted_step": 59
+        },
+        {
+          "t": 60,
+          "r_g": 0,
+          "predicted_step": 61
+        },
+        {
+          "t": 62,
+          "r_g": 0,
+          "predicted_step": 63
+        },
+        {
+          "t": 64,
+          "r_g": 0,
+          "predicted_step": 65
+        },
+        {
+          "t": 66,
+          "r_g": 0,
+          "predicted_step": 67
+        },
+        {
+          "t": 68,
+          "r_g": 0,
+          "predicted_step": 69
+        },
+        {
+          "t": 70,
+          "r_g": 0,
+          "predicted_step": 71
+        }
+      ]
+    },
+    {
+      "episode_id": 75,
+      "predictions": 50,
+      "full_block_all_negative": 8,
+      "blocks_with_closing": 42,
+      "blocks_with_executed_closing": 32,
+      "blocks_closing_only_beyond_H": 10,
+      "late_blocks_30_to_80": 26,
+      "late_blocks_with_closing": 26,
+      "late_blocks_closing_beyond_H": 3,
+      "first_ACT_positive_step": 38,
+      "positive_ACT_steps": 62,
+      "ACT_sign_reversals": 1,
+      "contact_step_counts": {
+        "left_finger_cube": 54,
+        "left_finger_table": 21,
+        "right_finger_cube": 60,
+        "right_finger_table": 0,
+        "left_fingerpad_cube": 54,
+        "left_fingerpad_table": 0,
+        "right_fingerpad_cube": 60,
+        "right_fingerpad_table": 0
+      },
+      "both_fingerpads_cube_steps": 54,
+      "first_both_fingerpads_cube_step": 47,
+      "first_finger_table_step": 38,
+      "last_finger_table_step": 73,
+      "same_future_gripper_sign_conflict_fraction": 0.005668934240362812,
+      "deferred_closing_comparisons": 9,
+      "positive_deferred_closing_postponements": 4,
+      "first_lift_step": 90,
+      "hold_status": "insufficient_window",
+      "closing_offsets": [
+        {
+          "t": 0,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 2,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 4,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 6,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 8,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 10,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 12,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 14,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 16,
+          "r_g": 18,
+          "predicted_step": 35
+        },
+        {
+          "t": 18,
+          "r_g": 15,
+          "predicted_step": 34
+        },
+        {
+          "t": 20,
+          "r_g": 13,
+          "predicted_step": 34
+        },
+        {
+          "t": 22,
+          "r_g": 12,
+          "predicted_step": 35
+        },
+        {
+          "t": 24,
+          "r_g": 10,
+          "predicted_step": 35
+        },
+        {
+          "t": 26,
+          "r_g": 9,
+          "predicted_step": 36
+        },
+        {
+          "t": 28,
+          "r_g": 7,
+          "predicted_step": 36
+        },
+        {
+          "t": 30,
+          "r_g": 5,
+          "predicted_step": 36
+        },
+        {
+          "t": 32,
+          "r_g": 4,
+          "predicted_step": 37
+        },
+        {
+          "t": 34,
+          "r_g": 3,
+          "predicted_step": 38
+        },
+        {
+          "t": 36,
+          "r_g": 1,
+          "predicted_step": 38
+        },
+        {
+          "t": 38,
+          "r_g": 0,
+          "predicted_step": 39
+        },
+        {
+          "t": 40,
+          "r_g": 0,
+          "predicted_step": 41
+        },
+        {
+          "t": 42,
+          "r_g": 0,
+          "predicted_step": 43
+        },
+        {
+          "t": 44,
+          "r_g": 0,
+          "predicted_step": 45
+        },
+        {
+          "t": 46,
+          "r_g": 0,
+          "predicted_step": 47
+        },
+        {
+          "t": 48,
+          "r_g": 0,
+          "predicted_step": 49
+        },
+        {
+          "t": 50,
+          "r_g": 0,
+          "predicted_step": 51
+        },
+        {
+          "t": 52,
+          "r_g": 0,
+          "predicted_step": 53
+        },
+        {
+          "t": 54,
+          "r_g": 0,
+          "predicted_step": 55
+        },
+        {
+          "t": 56,
+          "r_g": 0,
+          "predicted_step": 57
+        },
+        {
+          "t": 58,
+          "r_g": 0,
+          "predicted_step": 59
+        },
+        {
+          "t": 60,
+          "r_g": 0,
+          "predicted_step": 61
+        },
+        {
+          "t": 62,
+          "r_g": 0,
+          "predicted_step": 63
+        },
+        {
+          "t": 64,
+          "r_g": 0,
+          "predicted_step": 65
+        },
+        {
+          "t": 66,
+          "r_g": 0,
+          "predicted_step": 67
+        },
+        {
+          "t": 68,
+          "r_g": 0,
+          "predicted_step": 69
+        },
+        {
+          "t": 70,
+          "r_g": 0,
+          "predicted_step": 71
+        },
+        {
+          "t": 72,
+          "r_g": 0,
+          "predicted_step": 73
+        },
+        {
+          "t": 74,
+          "r_g": 0,
+          "predicted_step": 75
+        },
+        {
+          "t": 76,
+          "r_g": 0,
+          "predicted_step": 77
+        },
+        {
+          "t": 78,
+          "r_g": 0,
+          "predicted_step": 79
+        },
+        {
+          "t": 80,
+          "r_g": 0,
+          "predicted_step": 81
+        },
+        {
+          "t": 82,
+          "r_g": 0,
+          "predicted_step": 83
+        },
+        {
+          "t": 84,
+          "r_g": 0,
+          "predicted_step": 85
+        },
+        {
+          "t": 86,
+          "r_g": 0,
+          "predicted_step": 87
+        },
+        {
+          "t": 88,
+          "r_g": 0,
+          "predicted_step": 89
+        },
+        {
+          "t": 90,
+          "r_g": 0,
+          "predicted_step": 91
+        },
+        {
+          "t": 92,
+          "r_g": 0,
+          "predicted_step": 93
+        },
+        {
+          "t": 94,
+          "r_g": 0,
+          "predicted_step": 95
+        },
+        {
+          "t": 96,
+          "r_g": 0,
+          "predicted_step": 97
+        },
+        {
+          "t": 98,
+          "r_g": 0,
+          "predicted_step": 99
+        }
+      ]
+    },
+    {
+      "episode_id": 94,
+      "predictions": 38,
+      "full_block_all_negative": 7,
+      "blocks_with_closing": 31,
+      "blocks_with_executed_closing": 18,
+      "blocks_closing_only_beyond_H": 13,
+      "late_blocks_30_to_80": 23,
+      "late_blocks_with_closing": 23,
+      "late_blocks_closing_beyond_H": 5,
+      "first_ACT_positive_step": 42,
+      "positive_ACT_steps": 34,
+      "ACT_sign_reversals": 1,
+      "contact_step_counts": {
+        "left_finger_cube": 51,
+        "left_finger_table": 7,
+        "right_finger_cube": 56,
+        "right_finger_table": 0,
+        "left_fingerpad_cube": 51,
+        "left_fingerpad_table": 0,
+        "right_fingerpad_cube": 56,
+        "right_fingerpad_table": 0
+      },
+      "both_fingerpads_cube_steps": 51,
+      "first_both_fingerpads_cube_step": 50,
+      "first_finger_table_step": 43,
+      "last_finger_table_step": 49,
+      "same_future_gripper_sign_conflict_fraction": 0.02252252252252252,
+      "deferred_closing_comparisons": 12,
+      "positive_deferred_closing_postponements": 9,
+      "first_lift_step": 66,
+      "hold_status": "insufficient_window",
+      "closing_offsets": [
+        {
+          "t": 0,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 2,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 4,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 6,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 8,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 10,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 12,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 14,
+          "r_g": 17,
+          "predicted_step": 32
+        },
+        {
+          "t": 16,
+          "r_g": 13,
+          "predicted_step": 30
+        },
+        {
+          "t": 18,
+          "r_g": 12,
+          "predicted_step": 31
+        },
+        {
+          "t": 20,
+          "r_g": 11,
+          "predicted_step": 32
+        },
+        {
+          "t": 22,
+          "r_g": 9,
+          "predicted_step": 32
+        },
+        {
+          "t": 24,
+          "r_g": 7,
+          "predicted_step": 32
+        },
+        {
+          "t": 26,
+          "r_g": 6,
+          "predicted_step": 33
+        },
+        {
+          "t": 28,
+          "r_g": 6,
+          "predicted_step": 35
+        },
+        {
+          "t": 30,
+          "r_g": 5,
+          "predicted_step": 36
+        },
+        {
+          "t": 32,
+          "r_g": 4,
+          "predicted_step": 37
+        },
+        {
+          "t": 34,
+          "r_g": 3,
+          "predicted_step": 38
+        },
+        {
+          "t": 36,
+          "r_g": 3,
+          "predicted_step": 40
+        },
+        {
+          "t": 38,
+          "r_g": 2,
+          "predicted_step": 41
+        },
+        {
+          "t": 40,
+          "r_g": 1,
+          "predicted_step": 42
+        },
+        {
+          "t": 42,
+          "r_g": 0,
+          "predicted_step": 43
+        },
+        {
+          "t": 44,
+          "r_g": 0,
+          "predicted_step": 45
+        },
+        {
+          "t": 46,
+          "r_g": 0,
+          "predicted_step": 47
+        },
+        {
+          "t": 48,
+          "r_g": 0,
+          "predicted_step": 49
+        },
+        {
+          "t": 50,
+          "r_g": 0,
+          "predicted_step": 51
+        },
+        {
+          "t": 52,
+          "r_g": 0,
+          "predicted_step": 53
+        },
+        {
+          "t": 54,
+          "r_g": 0,
+          "predicted_step": 55
+        },
+        {
+          "t": 56,
+          "r_g": 0,
+          "predicted_step": 57
+        },
+        {
+          "t": 58,
+          "r_g": 0,
+          "predicted_step": 59
+        },
+        {
+          "t": 60,
+          "r_g": 0,
+          "predicted_step": 61
+        },
+        {
+          "t": 62,
+          "r_g": 0,
+          "predicted_step": 63
+        },
+        {
+          "t": 64,
+          "r_g": 0,
+          "predicted_step": 65
+        },
+        {
+          "t": 66,
+          "r_g": 0,
+          "predicted_step": 67
+        },
+        {
+          "t": 68,
+          "r_g": 0,
+          "predicted_step": 69
+        },
+        {
+          "t": 70,
+          "r_g": 0,
+          "predicted_step": 71
+        },
+        {
+          "t": 72,
+          "r_g": 0,
+          "predicted_step": 73
+        },
+        {
+          "t": 74,
+          "r_g": 0,
+          "predicted_step": 75
+        }
+      ]
+    },
+    {
+      "episode_id": 99,
+      "predictions": 41,
+      "full_block_all_negative": 7,
+      "blocks_with_closing": 34,
+      "blocks_with_executed_closing": 19,
+      "blocks_closing_only_beyond_H": 15,
+      "late_blocks_30_to_80": 26,
+      "late_blocks_with_closing": 26,
+      "late_blocks_closing_beyond_H": 7,
+      "first_ACT_positive_step": 44,
+      "positive_ACT_steps": 31,
+      "ACT_sign_reversals": 14,
+      "contact_step_counts": {
+        "left_finger_cube": 36,
+        "left_finger_table": 25,
+        "right_finger_cube": 38,
+        "right_finger_table": 3,
+        "left_fingerpad_cube": 35,
+        "left_fingerpad_table": 0,
+        "right_fingerpad_cube": 34,
+        "right_fingerpad_table": 0
+      },
+      "both_fingerpads_cube_steps": 34,
+      "first_both_fingerpads_cube_step": 67,
+      "first_finger_table_step": 39,
+      "last_finger_table_step": 63,
+      "same_future_gripper_sign_conflict_fraction": 0.03888888888888889,
+      "deferred_closing_comparisons": 13,
+      "positive_deferred_closing_postponements": 10,
+      "first_lift_step": 72,
+      "hold_status": "insufficient_window",
+      "closing_offsets": [
+        {
+          "t": 0,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 2,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 4,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 6,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 8,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 10,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 12,
+          "r_g": null,
+          "predicted_step": null
+        },
+        {
+          "t": 14,
+          "r_g": 17,
+          "predicted_step": 32
+        },
+        {
+          "t": 16,
+          "r_g": 13,
+          "predicted_step": 30
+        },
+        {
+          "t": 18,
+          "r_g": 10,
+          "predicted_step": 29
+        },
+        {
+          "t": 20,
+          "r_g": 9,
+          "predicted_step": 30
+        },
+        {
+          "t": 22,
+          "r_g": 8,
+          "predicted_step": 31
+        },
+        {
+          "t": 24,
+          "r_g": 7,
+          "predicted_step": 32
+        },
+        {
+          "t": 26,
+          "r_g": 6,
+          "predicted_step": 33
+        },
+        {
+          "t": 28,
+          "r_g": 5,
+          "predicted_step": 34
+        },
+        {
+          "t": 30,
+          "r_g": 5,
+          "predicted_step": 36
+        },
+        {
+          "t": 32,
+          "r_g": 4,
+          "predicted_step": 37
+        },
+        {
+          "t": 34,
+          "r_g": 4,
+          "predicted_step": 39
+        },
+        {
+          "t": 36,
+          "r_g": 4,
+          "predicted_step": 41
+        },
+        {
+          "t": 38,
+          "r_g": 2,
+          "predicted_step": 41
+        },
+        {
+          "t": 40,
+          "r_g": 2,
+          "predicted_step": 43
+        },
+        {
+          "t": 42,
+          "r_g": 1,
+          "predicted_step": 44
+        },
+        {
+          "t": 44,
+          "r_g": 1,
+          "predicted_step": 46
+        },
+        {
+          "t": 46,
+          "r_g": 1,
+          "predicted_step": 48
+        },
+        {
+          "t": 48,
+          "r_g": 1,
+          "predicted_step": 50
+        },
+        {
+          "t": 50,
+          "r_g": 1,
+          "predicted_step": 52
+        },
+        {
+          "t": 52,
+          "r_g": 1,
+          "predicted_step": 54
+        },
+        {
+          "t": 54,
+          "r_g": 1,
+          "predicted_step": 56
+        },
+        {
+          "t": 56,
+          "r_g": 0,
+          "predicted_step": 57
+        },
+        {
+          "t": 58,
+          "r_g": 0,
+          "predicted_step": 59
+        },
+        {
+          "t": 60,
+          "r_g": 0,
+          "predicted_step": 61
+        },
+        {
+          "t": 62,
+          "r_g": 0,
+          "predicted_step": 63
+        },
+        {
+          "t": 64,
+          "r_g": 0,
+          "predicted_step": 65
+        },
+        {
+          "t": 66,
+          "r_g": 0,
+          "predicted_step": 67
+        },
+        {
+          "t": 68,
+          "r_g": 0,
+          "predicted_step": 69
+        },
+        {
+          "t": 70,
+          "r_g": 0,
+          "predicted_step": 71
+        },
+        {
+          "t": 72,
+          "r_g": 0,
+          "predicted_step": 73
+        },
+        {
+          "t": 74,
+          "r_g": 0,
+          "predicted_step": 75
+        },
+        {
+          "t": 76,
+          "r_g": 0,
+          "predicted_step": 77
+        },
+        {
+          "t": 78,
+          "r_g": 0,
+          "predicted_step": 79
+        },
+        {
+          "t": 80,
+          "r_g": 3,
+          "predicted_step": 84
+        }
+      ]
+    }
+  ],
+  "reference_identical_episodes": [
+    "episode_0000",
+    "episode_0011",
+    "episode_0056",
+    "episode_0002",
+    "episode_0003",
+    "episode_0013",
+    "episode_0075",
+    "episode_0094",
+    "episode_0099"
+  ],
+  "note": "Selected diagnostic cases; step-boundary contacts only; not population success rates."
+}

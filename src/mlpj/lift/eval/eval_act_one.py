@@ -80,6 +80,7 @@ def main(args=None, runtime=None):
     (output / "config.json").write_text(json.dumps(config, indent=2))
 
     env = None
+    diagnostics = None
     environment_started = time.perf_counter()
     try:
         if args.initial_states == "random":
@@ -165,6 +166,10 @@ def main(args=None, runtime=None):
             image = observation[f"{camera}_image"]
             return np.flipud(image).copy() if flips[camera] else image.copy()
 
+        if settings['phase_diagnostics']:
+            from mlpj.lift.eval.phase_diagnostics import PhaseDiagnostics
+            diagnostics = PhaseDiagnostics(output, env)
+
         def predict(observation):
             state = (
                 state_vector(observation) - np.asarray(stats["state_mean"])
@@ -187,12 +192,17 @@ def main(args=None, runtime=None):
                 prediction, _, _ = model(state, images, None)
             with timings.stage("action_to_cpu"):
                 actions = prediction[0].float().cpu().numpy()
+            normalized_actions = actions
             actions = (
                 actions * np.asarray(stats["action_std"])
                 + np.asarray(stats["action_mean"])
             )
             assert np.isfinite(actions).all()
-            return np.clip(actions, -1, 1)
+            clipped = np.clip(actions, -1, 1)
+            if diagnostics is not None:
+                diagnostics.prediction(step, chunk_id + 1, normalized_actions, actions, clipped,
+                                       horizon, args.steps-step, observation)
+            return clipped
 
         horizon = settings["execution_horizon"]
         if horizon > ckpt["model_args"]["num_queries"]:
@@ -229,9 +239,12 @@ def main(args=None, runtime=None):
                 before_eef = obs["robot0_eef_pos"].copy()
                 before_cube = obs["cube_pos"].copy()
                 before_gripper = obs["robot0_gripper_qpos"].copy()
+                diagnostic_before = diagnostics.snapshot(obs) if diagnostics is not None else None
                 with timings.stage("env_step_including_render"):
                     obs, reward, done, info = env.step(action)
                 step += 1
+                if diagnostics is not None:
+                    diagnostics.step(step, action_source, action, diagnostic_before, diagnostics.snapshot(obs))
                 success = bool(env._check_success())
                 metric.update(success)
                 trigger_height = env.model.mujoco_arena.table_offset[2] + settings["hold_trigger_height"]
@@ -383,6 +396,8 @@ def main(args=None, runtime=None):
         return runtime
 
     finally:
+        if diagnostics is not None:
+            diagnostics.close()
         if env is not None:
             env.close()
 

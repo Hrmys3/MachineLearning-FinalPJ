@@ -5,7 +5,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
-from mlpj.lift.config import load_config
+from mlpj.lift.config import load_config, validate_diagnostics
 import subprocess
 
 import numpy as np
@@ -101,6 +101,9 @@ def parse_args(batch=False):
     parser.add_argument("--steps", type=int)
     parser.add_argument("--execution-horizon", type=int,
                         help="每次预测后执行的动作步数H；覆盖YAML，须为正整数且不超过checkpoint预测长度K")
+    parser.add_argument("--episode-ids", help="初态编号列表，如11,56；不能与episode_limit同时使用")
+    parser.add_argument("--phase-diagnostics", action="store_true", default=None,
+                        help="记录完整预测块、姿态与步末接触；覆盖eval.phase_diagnostics")
     if not batch:
         parser.add_argument("--worker-indices", help="内部：同一worker顺序评测的索引列表")
         parser.add_argument("--index", type=int, default=int(os.environ.get("EVAL_INDEX", "0")))
@@ -114,6 +117,17 @@ def parse_args(batch=False):
             e[key] = str(value) if isinstance(value, Path) else value
         else:
             setattr(args, name, Path(e[key]) if name == "checkpoint" else e[key])
+    if args.episode_ids is not None:
+        try:
+            e['episode_ids'] = [int(i) for i in args.episode_ids.split(',')]
+        except ValueError:
+            parser.error('--episode-ids须为逗号分隔整数')
+    if args.phase_diagnostics is not None:
+        e['phase_diagnostics'] = args.phase_diagnostics
+    try:
+        validate_diagnostics(e)
+    except ValueError as exc:
+        parser.error(str(exc))
     if e["execution_horizon"] <= 0:
         parser.error("--execution-horizon 须为正整数")
     if args.steps < round(e["metric_hold_seconds"] * 20):
@@ -154,7 +168,7 @@ def experiment_config(args):
 
 def evaluation_ids(args):
     if args.initial_states == "valid":
-        return json.loads(Path("data/lift/lift_act/splits.json").read_text())["valid"]
+        return select_episode_ids(json.loads(Path("data/lift/lift_act/splits.json").read_text())["valid"], args.settings["eval"])
     import h5py
     path = Path(args.settings["random_set"]["path"])
     manifest = json.loads(path.with_suffix(".json").read_text())
@@ -164,4 +178,13 @@ def evaluation_ids(args):
         count = len(f["states"])
     if count != args.settings["random_set"]["count"] or manifest["seed"] != args.settings["random_set"]["seed"]:
         raise ValueError("配置数量/种子与已冻结随机集不符；请生成新的数据集版本")
-    return list(range(count))
+    return select_episode_ids(list(range(count)), args.settings["eval"])
+
+
+def select_episode_ids(available, settings):
+    selected = settings.get('episode_ids')
+    if selected is None:
+        return available
+    if not set(selected) <= set(available):
+        raise ValueError('episode_ids含不属于当前初态集的编号')
+    return list(selected)

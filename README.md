@@ -290,3 +290,26 @@ MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/lift/tools/benchmark_speed.py --k
 需要共享模型和完整评测附件时，可单独发布资源，并在文档中记录下载地址、对应代码版本及文件校验值。
 
 批量 `metrics.json` 的 `lift_latency` 汇总抬升所需控制步数：`first_success_step` 是首次原生高度达标，`first_lift_step` 是首次连续确认抬升的回溯起点，`first_lift_confirmation_step` 是确认完成步。各项报告已观测轮数、未观测或未完成轮数、均值/中位数/最小/最大步数及均值/中位秒数（20Hz下步数除20）；无观测时统计为null。均值只针对达到对应条件的轮次，必须连同成功率解读，不能将其当全部初态的平均完成时间。逐轮字段已存在，新增汇总仅适用于新评测；旧结果可离线复算，不必重跑或改写原文件。
+
+## 阶段转换诊断
+
+在现有评测命令上添加 `--phase-diagnostics --episode-ids 11,56`，可仅重放指定初态并保存完整动作块和物理状态。`--episode-ids` 是所选random/valid集合的实际编号，顺序保留；不能同时设置 `eval.episode_limit`。单轮入口的 `--index` 则是筛选后列表中的索引。默认关闭诊断，不改变控制和评价协议。
+
+```bash
+MUJOCO_GL=glfw ACT_PRETRAINED=0 python scripts/lift/eval/run_act_validation.py \
+  --policy act_hold --execution-horizon 2 \
+  --checkpoint outputs/lift/act_lift50_s42_v1/checkpoint.pt \
+  --episode-ids 11,56,13,75,94,99,0,2,3 --phase-diagnostics \
+  --output outputs/lift/phase_diagnostics50_h2_new
+```
+
+每轮额外保存 `predictions.jsonl`（完整归一化/反归一化/裁剪后K×7动作和本轮选中偏移）、`physical_states.jsonl`（步前/步后姿态、夹爪速度/内部目标、手指/指垫与方块及桌面接触）、`diagnostics_metadata.json`（精确几何映射和采样口径）。`t` 表示预测前已执行步数，预测第 `k` 行对应控制步 `t+k+1`；规则动作不伪装成预测块。接触仅控制步边界采样，不能代表全部物理子步或证明夹稳。数据逐条落盘，异常时保留已记录内容；输出必须为新目录。
+
+```bash
+python scripts/lift/eval/analyze_phase_diagnostics.py \
+  --input outputs/lift/phase_diagnostics50_h2_new \
+  --reference outputs/lift/act_lift50_s42_h2_random100_v1 \
+  --output outputs/lift/phase_diagnostics50_h2_new_analysis
+```
+
+分析生成预测夹爪热图、闭合偏移与物理时序图及 `summary.json`，并核对记录动作与实际执行动作一致。可选 `--reference` 逐字段检查与历史CSV及result的一致性，不传则只分析当前记录。按失败现象选择的子集用于诊断，不能据其计算总体成功率；诊断开销也不能作为推理速度结论。
