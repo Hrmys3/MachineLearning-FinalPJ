@@ -101,6 +101,10 @@ for episode_id, (state, action) in load_joint_episodes(base, [0, 1]).items():
 PY
 ```
 
+真实ACT策略与仿真的单动作检查使用 `scripts/pusht/checks/serve_act_policy.py` 和 `scripts/pusht/checks/check_act_eval_link.py`。两个独立环境、空闲GPU选择和退出要求见 [真实模型单动作联通](docs/pusht/ACT_EVAL_LINK.md)。
+
+训练产物可用 `scripts/pusht/checks/check_act_deployment.py` 做项目推理与真实XPolicyLab适配器的离线数值对照；它显式禁用TF32并关闭时间集成，环境精度和误差边界见 [部署对照说明](docs/pusht/ACT_DEPLOYMENT_CHECK.md)。
+
 单批次模型计算检查入口为 `scripts/pusht/checks/check_act_batch.py`。短训练诊断入口使用episode 0训练及计算统计量，episode 1做固定帧流程验证；两条示范在正式划分中仍属于训练池，其结果不能当作valid20成绩。使用前重新检查GPU实时空闲，并指定新的输出目录：
 
 ```bash
@@ -110,7 +114,7 @@ python scripts/pusht/train/train_act_smoke.py \
   --updates 20 --val-every 10
 ```
 
-短训练脚本冻结配置与源码、按有效动作元素平均L1、固定验证帧和验证随机数，并检查checkpoint保存和重载；当前仅经过语法及相关CPU组件检查，完整GPU短训练待执行。
+短训练脚本冻结配置与源码、按有效动作元素平均L1、固定验证帧和验证随机数，并检查checkpoint保存和重载；该入口用于检查短训练和模型重载，不能据此报告正式验证集成绩或闭环成功率。
 
 此接口尚未接入正式训练入口。上游 ACT 的原入口包含额外动作移位、全数据统计及连续编号假设，不能直接作为本项目的固定划分训练入口。下载、数据契约、检查范围和下一步见 [Push-T 数据与 ACT 适配](docs/pusht/DATA_AND_ACT.md)。下文的数据准备、ACT源码、训练和评测命令均属于 Lift。
 

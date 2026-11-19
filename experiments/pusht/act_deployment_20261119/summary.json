@@ -1,0 +1,385 @@
+{
+  "date": "2026-11-19",
+  "scope": "offline actual XPolicyLab ACT adapter vs project Dataset/direct ACT; one reset per frame; no temporal aggregation, network or simulator",
+  "runs": [
+    {
+      "output": "outputs/pusht/checks/act_deployment_20261119_v1",
+      "returncode": 1,
+      "result_sha256": "a4217a0d33741e33181081822aa3ed5a94919f43432a86a2600da2c2bb83ee9d",
+      "result": {
+        "ok": false,
+        "scope": "offline ACT deployment equivalence; temporal aggregation disabled",
+        "frames": [],
+        "gpu_uuid": "GPU-0b9f2b02-f653-5a07-7c23-9c8640fa5e62",
+        "physical_index": 3,
+        "error": "AssertionError('\\nNot equal to tolerance rtol=1e-05, atol=1e-06\\n\\nMismatched elements: 3 / 6 (50%)\\nMax absolute difference: 1.3138051e-06\\nMax relative difference: 0.00960692\\n x: array([-0.000138,  0.020876, -0.001163,  0.013882,  0.00187 , -0.001855],\\n      dtype=float32)\\n y: array([-0.000137,  0.020877, -0.001164,  0.013882,  0.00187 , -0.001855],\\n      dtype=float32)')",
+        "elapsed_seconds": 4.871717412956059
+      }
+    },
+    {
+      "output": "outputs/pusht/checks/act_deployment_20261119_v2",
+      "returncode": 1,
+      "result_sha256": "cc441d599780eb8d9b041650cb9be4641988d281fa851335f96432e5ad486601",
+      "result": {
+        "ok": false,
+        "scope": "offline ACT deployment equivalence; temporal aggregation disabled",
+        "frames": [
+          {
+            "episode": 0,
+            "timestep": 12,
+            "image_input_bitwise_equal": true,
+            "qpos_input_bitwise_equal": true,
+            "project_image_strides": [
+              2764800,
+              921600,
+              307200,
+              640,
+              1
+            ],
+            "native_image_strides": [
+              2764800,
+              921600,
+              1,
+              1920,
+              3
+            ],
+            "layout_aligned_chunk_max_abs_error": 0.0,
+            "native_chunk_strict_pass": false,
+            "native_action_strict_pass": false,
+            "image_input_max_abs_error": 0.0,
+            "qpos_input_max_abs_error": 0.0,
+            "normalized_chunk_max_abs_error": 0.0001560300588607788,
+            "denormalized_first_action_max_abs_error": 1.919269561767578e-05,
+            "action": [
+              -0.0001380699104629457,
+              0.02087615616619587,
+              -0.0011628431966528296,
+              0.013882174156606197,
+              0.0018698560306802392,
+              -0.0018551666289567947,
+              0.999196469783783,
+              -0.38658231496810913,
+              1.8927950859069824,
+              1.1939265727996826,
+              -1.0379512310028076,
+              -0.04649682343006134,
+              -0.5992562770843506,
+              0.008269309997558594
+            ],
+            "arm_min": -1.0379512310028076,
+            "arm_max": 1.8927950859069824,
+            "gripper_raw_values": [
+              0.999196469783783,
+              0.008269309997558594
+            ],
+            "gripper_out_of_0_1": [
+              false,
+              false
+            ]
+          },
+          {
+            "episode": 0,
+            "timestep": 179,
+            "image_input_bitwise_equal": true,
+            "qpos_input_bitwise_equal": true,
+            "project_image_strides": [
+              2764800,
+              921600,
+              307200,
+              640,
+              1
+            ],
+            "native_image_strides": [
+              2764800,
+              921600,
+              1,
+              1920,
+              3
+            ],
+            "layout_aligned_chunk_max_abs_error": 0.0,
+            "native_chunk_strict_pass": false,
+            "native_action_strict_pass": false,
+            "image_input_max_abs_error": 0.0,
+            "qpos_input_max_abs_error": 0.0,
+            "normalized_chunk_max_abs_error": 0.00022454559803009033,
+            "denormalized_first_action_max_abs_error": 2.057105302810669e-05,
+            "action": [
+              -0.0004333329852670431,
+              0.021098898723721504,
+              -0.0009591133566573262,
+              0.01388110313564539,
+              0.0018537293653935194,
+              -0.002256773179396987,
+              0.999026894569397,
+              -0.3940046727657318,
+              1.9003019332885742,
+              1.197619915008545,
+              -1.0396724939346313,
+              -0.04564352706074715,
+              -0.6047074794769287,
+              -0.0009291991591453552
+            ],
+            "arm_min": -1.0396724939346313,
+            "arm_max": 1.9003019332885742,
+            "gripper_raw_values": [
+              0.999026894569397,
+              -0.0009291991591453552
+            ],
+            "gripper_out_of_0_1": [
+              false,
+              true
+            ]
+          },
+          {
+            "episode": 0,
+            "timestep": 358,
+            "image_input_bitwise_equal": true,
+            "qpos_input_bitwise_equal": true,
+            "project_image_strides": [
+              2764800,
+              921600,
+              307200,
+              640,
+              1
+            ],
+            "native_image_strides": [
+              2764800,
+              921600,
+              1,
+              1920,
+              3
+            ],
+            "layout_aligned_chunk_max_abs_error": 0.0,
+            "native_chunk_strict_pass": false,
+            "native_action_strict_pass": false,
+            "image_input_max_abs_error": 0.0,
+            "qpos_input_max_abs_error": 0.0,
+            "normalized_chunk_max_abs_error": 0.00022518634796142578,
+            "denormalized_first_action_max_abs_error": 7.748603820800781e-05,
+            "action": [
+              0.00039027153979986906,
+              0.020463354885578156,
+              -0.0010409607784822583,
+              0.013939332216978073,
+              0.0014878090005367994,
+              -0.0023964522406458855,
+              0.9992550611495972,
+              -0.3858911991119385,
+              1.8841040134429932,
+              1.2229630947113037,
+              -1.041609764099121,
+              -0.0486467108130455,
+              -0.5953691005706787,
+              0.01639246940612793
+            ],
+            "arm_min": -1.041609764099121,
+            "arm_max": 1.8841040134429932,
+            "gripper_raw_values": [
+              0.9992550611495972,
+              0.01639246940612793
+            ],
+            "gripper_out_of_0_1": [
+              false,
+              false
+            ]
+          }
+        ],
+        "gpu_uuid": "GPU-0b9f2b02-f653-5a07-7c23-9c8640fa5e62",
+        "physical_index": 3,
+        "weights_exact_equal": true,
+        "completed_frames": 3,
+        "checkpoint_sha256": "a00e0b85b1c054f5ac7bdc254263e754503d0a04bfea84cfde32eddb1b0cb726",
+        "stats_sha256": "7332e72e3c8e3bbca408a276940adfac7928dbe1d4d84a2ed3ec16e8032f007b",
+        "peak_allocated_mib": 962.798828125,
+        "error": "AssertionError('Native layouts exceed strict tolerance; inspect saved layout-aligned diagnostics')",
+        "elapsed_seconds": 5.485710038919933
+      }
+    },
+    {
+      "output": "outputs/pusht/checks/act_deployment_20261119_v3",
+      "returncode": 0,
+      "result_sha256": "e1354252af465d095453ca286636a1629668ce411a14771ec4075c10f7e5a3b8",
+      "result": {
+        "ok": true,
+        "scope": "offline ACT deployment equivalence; temporal aggregation disabled",
+        "frames": [
+          {
+            "episode": 0,
+            "timestep": 12,
+            "image_input_bitwise_equal": true,
+            "qpos_input_bitwise_equal": true,
+            "project_image_strides": [
+              2764800,
+              921600,
+              307200,
+              640,
+              1
+            ],
+            "native_image_strides": [
+              2764800,
+              921600,
+              1,
+              1920,
+              3
+            ],
+            "layout_aligned_chunk_max_abs_error": 0.0,
+            "native_chunk_strict_pass": true,
+            "native_action_strict_pass": true,
+            "image_input_max_abs_error": 0.0,
+            "qpos_input_max_abs_error": 0.0,
+            "normalized_chunk_max_abs_error": 5.364418029785156e-07,
+            "denormalized_first_action_max_abs_error": 9.685754776000977e-08,
+            "action": [
+              -0.00013672641944140196,
+              0.02087731473147869,
+              -0.0011641725432127714,
+              0.013881341554224491,
+              0.001868244493380189,
+              -0.001853994675911963,
+              0.9991970062255859,
+              -0.386577844619751,
+              1.8927634954452515,
+              1.1939643621444702,
+              -1.0379290580749512,
+              -0.04649944603443146,
+              -0.5992406606674194,
+              0.008260674774646759
+            ],
+            "arm_min": -1.0379290580749512,
+            "arm_max": 1.8927634954452515,
+            "gripper_raw_values": [
+              0.9991970062255859,
+              0.008260674774646759
+            ],
+            "gripper_out_of_0_1": [
+              false,
+              false
+            ]
+          },
+          {
+            "episode": 0,
+            "timestep": 179,
+            "image_input_bitwise_equal": true,
+            "qpos_input_bitwise_equal": true,
+            "project_image_strides": [
+              2764800,
+              921600,
+              307200,
+              640,
+              1
+            ],
+            "native_image_strides": [
+              2764800,
+              921600,
+              1,
+              1920,
+              3
+            ],
+            "layout_aligned_chunk_max_abs_error": 0.0,
+            "native_chunk_strict_pass": true,
+            "native_action_strict_pass": true,
+            "image_input_max_abs_error": 0.0,
+            "qpos_input_max_abs_error": 0.0,
+            "normalized_chunk_max_abs_error": 7.152557373046875e-07,
+            "denormalized_first_action_max_abs_error": 1.4901161193847656e-08,
+            "action": [
+              -0.0004327719798311591,
+              0.021100591868162155,
+              -0.000960168894380331,
+              0.013880293816328049,
+              0.0018525737104937434,
+              -0.0022559971548616886,
+              0.9990265965461731,
+              -0.39399224519729614,
+              1.900286316871643,
+              1.1976629495620728,
+              -1.0396552085876465,
+              -0.0456542894244194,
+              -0.6046845316886902,
+              -0.0009475871920585632
+            ],
+            "arm_min": -1.0396552085876465,
+            "arm_max": 1.900286316871643,
+            "gripper_raw_values": [
+              0.9990265965461731,
+              -0.0009475871920585632
+            ],
+            "gripper_out_of_0_1": [
+              false,
+              true
+            ]
+          },
+          {
+            "episode": 0,
+            "timestep": 358,
+            "image_input_bitwise_equal": true,
+            "qpos_input_bitwise_equal": true,
+            "project_image_strides": [
+              2764800,
+              921600,
+              307200,
+              640,
+              1
+            ],
+            "native_image_strides": [
+              2764800,
+              921600,
+              1,
+              1920,
+              3
+            ],
+            "layout_aligned_chunk_max_abs_error": 0.0,
+            "native_chunk_strict_pass": true,
+            "native_action_strict_pass": true,
+            "image_input_max_abs_error": 0.0,
+            "qpos_input_max_abs_error": 0.0,
+            "normalized_chunk_max_abs_error": 5.066394805908203e-07,
+            "denormalized_first_action_max_abs_error": 1.1920928955078125e-07,
+            "action": [
+              0.00039175222627818584,
+              0.02046377584338188,
+              -0.001042063464410603,
+              0.01393780205398798,
+              0.0014870711602270603,
+              -0.002394820796325803,
+              0.9992546439170837,
+              -0.3858570158481598,
+              1.8840126991271973,
+              1.222994089126587,
+              -1.0415942668914795,
+              -0.048647694289684296,
+              -0.5953555107116699,
+              0.016393795609474182
+            ],
+            "arm_min": -1.0415942668914795,
+            "arm_max": 1.8840126991271973,
+            "gripper_raw_values": [
+              0.9992546439170837,
+              0.016393795609474182
+            ],
+            "gripper_out_of_0_1": [
+              false,
+              false
+            ]
+          }
+        ],
+        "gpu_uuid": "GPU-0b9f2b02-f653-5a07-7c23-9c8640fa5e62",
+        "physical_index": 3,
+        "cudnn_allow_tf32": false,
+        "matmul_allow_tf32": false,
+        "weights_exact_equal": true,
+        "completed_frames": 3,
+        "checkpoint_sha256": "a00e0b85b1c054f5ac7bdc254263e754503d0a04bfea84cfde32eddb1b0cb726",
+        "stats_sha256": "7332e72e3c8e3bbca408a276940adfac7928dbe1d4d84a2ed3ec16e8032f007b",
+        "peak_allocated_mib": 962.798828125,
+        "elapsed_seconds": 5.461936125997454
+      }
+    }
+  ],
+  "protocol_sha256": "a21610ce3aded745e3cd74011eca5b09ff62bda1f805056b0126a935b67ed21a",
+  "final_script_sha256": "d4c36a0460297aec6786a859979c8473292256d57c5e2346fedb4157af4a88e4",
+  "max_normalized_chunk_abs_error": 7.152557373046875e-07,
+  "max_denormalized_first_action_abs_error": 1.1920928955078125e-07,
+  "gpu_after": "uuid, memory.used [MiB], utilization.gpu [%]\nGPU-0b9f2b02-f653-5a07-7c23-9c8640fa5e62, 1 MiB, 0 %\n",
+  "limitation": "Strict passing result requires explicit TF32 disable in comparison process. Original default-setting runs failed strict tolerance; layout-aligned recalculation matched exactly. One raw right-gripper prediction is below 0; this is recorded, not clipped or a task success claim."
+}

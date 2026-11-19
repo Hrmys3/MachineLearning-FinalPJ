@@ -85,8 +85,8 @@ PY
 
 `src/mlpj/pusht/act_training.py`的`valid_act_losses`将固定上游ACT的masked L1从包含填充位置的分母换算为有效元素平均；必须只转换一次，掩码长度必须匹配模型动作块。合成CPU检查中，50个/1个有效动作的相同误差均得到L1=2，填充梯度为0。
 
-`scripts/pusht/train/train_act_smoke.py`现已创建，默认20次更新、batch size 1、有效元素平均L1、KL权重10、梯度裁剪1、无AMP。仅episode 0参与训练/统计量，episode 1是诊断验证，仍属于正式训练池。验证使用固定帧与fork_rng种子1000；保存parameters.yaml、源码、逐次指标、best/last模型及统计量，并计划检查最后模型重载的推理一致性。best允许在第0次更新被选中；该目录没有用于断点续训的优化器状态。完整GPU流程尚未执行，目前仅语法及相关CPU组件通过，不能称checkpoint重载已验收。运行命令见根README。
+`scripts/pusht/train/train_act_smoke.py`现已创建，默认20次更新、batch size 1、有效元素平均L1、KL权重10、梯度裁剪1、无AMP。仅episode 0参与训练/统计量，episode 1是诊断验证，仍属于正式训练池。验证使用固定帧与fork_rng种子1000；保存parameters.yaml、源码、逐次指标、best/last模型及统计量，并计划检查最后模型重载的推理一致性。best允许在第0次更新被选中；该目录没有用于断点续训的优化器状态。2026-11-19已完成20次更新的GPU诊断和last模型/统计量重载：退出码0、ok:true，推理输出(1,50,14)重载最大差0。证据`outputs/pusht/act_smoke_20261119_v1/`，小型记录见[实验摘要](../../experiments/pusht/act_smoke_20261119/summary.json)。诊断验证总损失100.66808→66.99278，但L1 9.41976→9.46229略升，主要是KL下降；不能据此声称动作预测泛化改善。运行命令见根README。
 
-下一步实时检查GPU后执行短训练诊断，核对有限损失、更新次数、checkpoint与统计量重载，再准备正式预算数据、训练入口和完整闭环。尚无正式Push-T训练权重、成功率或保留集结果。
+真实模型部署的离线对照已在显式FP32下通过三帧检查；默认设置的内存布局相关差异和一次夹爪越界被单独保留，详情见[部署对照](ACT_DEPLOYMENT_CHECK.md)。真实模型服务与EvalEnv的单动作联动已通过，详见[单动作说明](ACT_EVAL_LINK.md)。下一步明确初态恢复和多动作执行协议，再扩展短闭环并准备正式预算数据及验证协议。每次GPU运行前仍需检查实时空闲。尚无正式Push-T训练权重、成功率或保留集结果。
 
 Push-T不导入Lift代码；独立维护机器人、25Hz控制、相机、14维动作、环境依赖与实验资源。mlpj包壳、common、根文档和Git历史仍共享。`pusht`分支隔离开发历史，不能隔离本机Python环境、资源文件或GPU，细则见[结构说明](../REPOSITORY_LAYOUT.md)。

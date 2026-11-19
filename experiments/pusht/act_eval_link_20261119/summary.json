@@ -1,0 +1,255 @@
+{
+  "date": "2026-11-19",
+  "scope": "Real ACT -> localhost WebSocket -> fixed-layout-0 EvalEnv; exactly one policy action, no task success evaluation",
+  "code_head": "6538def1940d090295e4dd72e960144ae1f7999a",
+  "checkpoint_sha256": "a00e0b85b1c054f5ac7bdc254263e754503d0a04bfea84cfde32eddb1b0cb726",
+  "stats_sha256": "7332e72e3c8e3bbca408a276940adfac7928dbe1d4d84a2ed3ec16e8032f007b",
+  "evidence": "outputs/pusht/checks/act_eval_20261119_v1",
+  "process_status": {
+    "client_returncode": 0,
+    "server_returncode": 0
+  },
+  "root_result_sha256": "3d53259df90a4efbd67014669142b6cac64188000267d1a13bc09c4684724cd3",
+  "source_sha256": {
+    "scripts/pusht/checks/serve_act_policy.py": "33f4aed0ba198eac9fa0fc800dfa966af1726757005c1225bbbf4ddc15511184",
+    "scripts/pusht/checks/check_act_eval_link.py": "95cdaf0c6fce0693052dfb52de56687a9eeb03184d2d12604eefd52b4eb99ff5"
+  },
+  "server_protocol": {
+    "checkpoint_sha256": "a00e0b85b1c054f5ac7bdc254263e754503d0a04bfea84cfde32eddb1b0cb726",
+    "stats_sha256": "7332e72e3c8e3bbca408a276940adfac7928dbe1d4d84a2ed3ec16e8032f007b",
+    "model": {
+      "lr": 1e-05,
+      "lr_backbone": 1e-05,
+      "batch_size": 1,
+      "weight_decay": 0.0001,
+      "epochs": 300,
+      "lr_drop": 200,
+      "clip_max_norm": 0.1,
+      "backbone": "resnet18",
+      "dilation": false,
+      "position_embedding": "sine",
+      "camera_names": [
+        "cam_head",
+        "cam_right_wrist",
+        "cam_left_wrist"
+      ],
+      "enc_layers": 4,
+      "dec_layers": 7,
+      "dim_feedforward": 3200,
+      "hidden_dim": 512,
+      "dropout": 0.1,
+      "nheads": 8,
+      "pre_norm": false,
+      "masks": false,
+      "eval": false,
+      "onscreen_render": false,
+      "ckpt_dir": "/home/catlab/ml-ws/MachineLearning-FinalPJ/outputs/pusht/act_smoke_20261119_v1",
+      "policy_class": "ACT",
+      "bench_name": "RoboDojo",
+      "task_name": "push_T",
+      "seed": 0,
+      "num_epochs": 1,
+      "kl_weight": 10,
+      "chunk_size": 50,
+      "ckpt_setting": null,
+      "temporal_agg": false,
+      "save_freq": 6000,
+      "device": "cuda:0",
+      "env_cfg_type": "arx_x5",
+      "action_type": "joint",
+      "action_dim": 14
+    },
+    "gpu_uuid": "GPU-2a930f1b-76bb-42e9-3e22-990ed914204e",
+    "cudnn_allow_tf32": false,
+    "matmul_allow_tf32": false,
+    "python": "3.10.22 (main, Oct  1 2026, 20:14:04) [GCC 14.3.0]",
+    "torch": "2.4.1+cu121",
+    "torchvision": "0.19.1+cu121",
+    "websockets": "16.1.1",
+    "xpolicylab_head": "5d0be1499634d3176258c8f2e31f5fe816497b0a"
+  },
+  "client_protocol": {
+    "task": "push_T",
+    "layout": 0,
+    "physical_gpu": 3,
+    "gpu_uuid": "GPU-0b9f2b02-f653-5a07-7c23-9c8640fa5e62",
+    "port": 39063,
+    "actions": 1,
+    "head": "6538def1940d090295e4dd72e960144ae1f7999a",
+    "layout_sha256": "5d6c4c37b2715479cb6a16f6d1200c5de740f1fbbaa216640b3b8828295f0b07"
+  },
+  "action": {
+    "left_arm_joint_state": [
+      0.0003364683361724019,
+      0.02088048681616783,
+      -0.0013500559143722057,
+      0.013765303418040276,
+      0.0011245105415582657,
+      -0.002526954747736454
+    ],
+    "left_ee_joint_state": [
+      0.9994832873344421
+    ],
+    "right_arm_joint_state": [
+      -0.389775812625885,
+      1.888925313949585,
+      1.2068663835525513,
+      -1.0437211990356445,
+      -0.048700861632823944,
+      -0.5975964665412903
+    ],
+    "right_ee_joint_state": [
+      0.004692345857620239
+    ]
+  },
+  "observations_pixel_and_state_exact_equal": true,
+  "actions_network_exact_equal": true,
+  "physical_steps": 10,
+  "dt": 0.004,
+  "policy_actions": 1,
+  "gripper_mapping": {
+    "left_ee_joint_state": {
+      "raw": 0.9994832873344421,
+      "clipped_0_1": 0.9994832873344421,
+      "was_clipped": false,
+      "expected_primary_m": 0.04397209751605987,
+      "actual_native_primary_target_m": 0.04397209751605987
+    },
+    "right_ee_joint_state": {
+      "raw": 0.004692345857620239,
+      "clipped_0_1": 0.004692345857620239,
+      "was_clipped": false,
+      "expected_primary_m": -0.009746613323688508,
+      "actual_native_primary_target_m": -0.009746613323688508
+    }
+  },
+  "arm_targets": {
+    "left_arm_joint_state": {
+      "target": [
+        0.0003364683361724019,
+        0.02088048681616783,
+        -0.0013500559143722057,
+        0.013765303418040276,
+        0.0011245105415582657,
+        -0.002526954747736454
+      ],
+      "delta": [
+        0.0003364683356608441,
+        0.020880486816168987,
+        -0.0013500559143722233,
+        0.01376530341803949,
+        0.0011245105425569794,
+        -0.0025269547502371117
+      ],
+      "max_abs_delta_rad": 0.020880486816168987,
+      "joint_limits": [
+        [
+          -9.999999046325684,
+          9.999999046325684
+        ],
+        [
+          -9.999999046325684,
+          9.999999046325684
+        ],
+        [
+          -9.999999046325684,
+          9.999999046325684
+        ],
+        [
+          -9.999999046325684,
+          9.999999046325684
+        ],
+        [
+          -9.999999046325684,
+          9.999999046325684
+        ],
+        [
+          -3.1399998664855957,
+          3.1399998664855957
+        ]
+      ]
+    },
+    "right_arm_joint_state": {
+      "target": [
+        -0.389775812625885,
+        1.888925313949585,
+        1.2068663835525513,
+        -1.0437211990356445,
+        -0.048700861632823944,
+        -0.5975964665412903
+      ],
+      "delta": [
+        -0.38977581262639655,
+        1.888925313949586,
+        1.2068663835525513,
+        -1.0437211990356454,
+        -0.04870086163182523,
+        -0.597596466543791
+      ],
+      "max_abs_delta_rad": 1.888925313949586,
+      "joint_limits": [
+        [
+          -9.999999046325684,
+          9.999999046325684
+        ],
+        [
+          -9.999999046325684,
+          9.999999046325684
+        ],
+        [
+          -9.999999046325684,
+          9.999999046325684
+        ],
+        [
+          -9.999999046325684,
+          9.999999046325684
+        ],
+        [
+          -9.999999046325684,
+          9.999999046325684
+        ],
+        [
+          -3.1399998664855957,
+          3.1399998664855957
+        ]
+      ]
+    }
+  },
+  "measured_arm_changes": {
+    "left_arm": {
+      "delta_rad": [
+        0.0002953841753310701,
+        0.018414041027427875,
+        -0.0012065847404301342,
+        0.011992079205810238,
+        0.0009814033993262431,
+        -0.002204746941742544
+      ],
+      "max_abs_delta_rad": 0.018414041027427875
+    },
+    "right_arm": {
+      "delta_rad": [
+        -0.19042164087346689,
+        0.1997251212596905,
+        0.19577871263027188,
+        -0.19967216253280717,
+        -0.04256382957000997,
+        -0.19960393011820043
+      ],
+      "max_abs_delta_rad": 0.1997251212596905
+    }
+  },
+  "t_translation_m": 0.0,
+  "server_inference_seconds": 0.4879127540625632,
+  "request_seconds": 0.49088000308256596,
+  "server_peak_allocated_mib": 641.94921875,
+  "gpu_pair_after": "0, GPU-81845841-5e80-d78d-eca9-6346f067585c, 1959, 0\n1, GPU-4b239515-1fde-832e-32e4-36a9e109d63b, 24471, 0\n2, GPU-989993aa-ac9e-9cf6-376e-dc9680ad2bea, 11381, 0\n3, GPU-0b9f2b02-f653-5a07-7c23-9c8640fa5e62, 2, 0\n4, GPU-496c7a33-3049-fcc2-bb22-8634b831097e, 29005, 0\n5, GPU-9dc81213-bfcf-bfd9-4a99-587ed22f9306, 29005, 0\n6, GPU-2a930f1b-76bb-42e9-3e22-990ed914204e, 2, 0\n7, GPU-e8725982-03c6-e45c-4ee5-79460d72b936, 1, 0\n",
+  "limitations": [
+    "20-update diagnostic checkpoint, not a trained task policy",
+    "No temporal aggregation or second action",
+    "Both grippers happened to be in [0,1]; online clipping of out-of-range predictions not exercised",
+    "Right arm moved but did not reach target within 0.04 seconds",
+    "No T motion, task success rate, full episode, valid20 or heldout20 results",
+    "Server torch2.4.1/cu121 and simulator torch2.7.0/cu126 are separately frozen"
+  ]
+}

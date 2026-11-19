@@ -1,9 +1,45 @@
 # Push-T 项目交接
 
-更新于 2026-11-19。本文面向首次接手本项目的会话。课程项目已完成 Panda Lift 的初步实验，Push-T已完成环境与假策略单步验收、两条示范基础审计及CPU数据组件检查；真实ACT单批次计算已通过，短训练、正式训练和完整闭环尚未完成。Lift 的最新结果、配置与运行入口见 [HANDOFF_LIFT.md](HANDOFF_LIFT.md) 和 [README.md](README.md)。仓库工作约定见 [AGENTS.md](AGENTS.md)。
+更新于 2026-11-19。本文面向首次接手本项目的会话。课程项目已完成 Panda Lift 的初步实验，Push-T已完成环境与假策略单步验收、两条示范基础审计及CPU数据组件检查；真实ACT单批次计算及20次更新短训练/checkpoint重载已通过，正式训练和完整闭环尚未完成。Lift 的最新结果、配置与运行入口见 [HANDOFF_LIFT.md](HANDOFF_LIFT.md) 和 [README.md](README.md)。仓库工作约定见 [AGENTS.md](AGENTS.md)。
 
 历史目录重排已提交；本次用户明确授权更新文档、创建Push-T分支并提交相关未提交改动。下方阶段记录中的“当前”“未提交”和待办属于各自记录时间，接手以本节及最新进度为准；不改写既有实验来源提交。
 
+
+用户随后授权将上述短训练结果、离线部署对照、真实模型单动作入口及配套文档提交到pusht分支。本次提交前检查Python语法、实验JSON、文档链接和diff；沿用已完成GPU验收，不重复训练或仿真。下方各阶段“未commit”指当时状态，当前提交号以git log为准；未push或发布。
+
+## 最新结果：真实ACT→WebSocket→EvalEnv单动作通过（2026-11-19）
+
+用户明确授权完成真实模型单动作联通并汇报文件。新增`serve_act_policy.py`和`check_act_eval_link.py`，复用既有act策略环境和pusht_sim仿真环境，不安装依赖、不改上游/Lift实现。策略端torch2.4.1+cu121/torchvision0.19.1+cu121/websockets16.1.1实际加载torch2.7训练产物并推理通过；两端固定FP32、关闭时间集成。未比较跨PyTorch版本逐值一致性。
+
+实际策略GPU6、仿真GPU3，各次占用前均实时检查并由脚本再次守卫。证据`outputs/pusht/checks/act_eval_20261119_v1/`：服务/仿真退出码0，总审计及两端ok:true；reset、观测、动作请求各1。三路640×480 RGB图像SHA256、状态和返回14维动作两端一致。真实EvalEnv.take_action执行一次，控制队列长度10，sim_step实计10，dt=.004即0.04秒。左右臂最大实际关节变化0.018414/0.199725rad；右臂目标最大变化1.888925rad，尚未跟踪到该目标。左右夹爪预测0.999483/0.004692，本次未触发裁剪，原生米制映射与控制目标一致。T位移0，不是推动成功。
+
+保存前后三路6张PNG、真实状态、原始预测、原生插值及夹爪映射、checkpoint/布局/源码校验、有效配置、两端日志和监督收尾源码。主代理目视前后头部图像正常；日志无[Error]/Traceback，保留上游材质/显示/弃用警告。服务端首请求推理约0.488秒、往返0.491秒，不证明25Hz持续实时性；服务端PyTorch峰值641.95MiB。两进程正常关闭后GPU3/6均2MiB/0%。
+
+小型记录`experiments/pusht/act_eval_link_20261119/summary.json`，复现与范围见[真实模型单动作说明](docs/pusht/ACT_EVAL_LINK.md)。环境版本文档同步，所有图像、日志、权重继续忽略；未commit、push或发布。之前未提交的短训练/离线部署结果和子模块补丁均保留。
+
+下一步明确官方布局与示范初态差异、冻结多动作执行协议后，再授权开展短闭环。时间集成/多次取动作、越界夹爪在线裁剪、持续25Hz推理、正式train20/50及成功率均未验收。
+
+## 最新结果：真实ACT部署适配器离线对照通过，须固定FP32精度（2026-11-19）
+
+用户明确授权完成训练端到部署端数值一致性检查。新增`scripts/pusht/checks/check_act_deployment.py`，使用刚完成的last模型和同份统计量，比较项目Dataset/ACTPolicy与固定XPolicyLab真实Model的update_obs/get_action。时间集成关闭，episode0的12/179/358帧每帧reset；未启动Isaac或WebSocket。
+
+- 首轮v1默认精度超出rtol1e-5/atol1e-6严格阈值，退出码1。v2保留阈值并补充诊断，三帧输入/权重逐值相同，但CHW内存布局不同；同布局重算差0。默认设置下完整动作块最大差2.2519e-4、反归一化首动作最大差7.7486e-5，v2仍失败，未计为通过。
+- 仅在检查进程显式关闭cudnn/matmul TF32后，用原阈值在新目录v3重跑通过：3/3、ok:true、退出码0。模型图像与标准化状态输入差0，完整50步预测块最大差7.1525574e-7，首个14维动作最大差1.1920929e-7，左右臂/夹爪字段及统计量检查通过。结论限定显式FP32；后续模型服务精度须同步冻结，不能称默认精度逐值一致。
+- t=179右夹爪原始输出-0.0009475872，记录为模型输出越界，未裁剪或执行；其余检查帧夹爪范围正常。这不属于接口映射错误，也不证明策略推动有效。
+- 证据`outputs/pusht/checks/act_deployment_20261119_v1/`、v2、v3保留源码、protocol、预测NPZ、runtime日志及退出状态；最终GPU3前后1MiB/0%，PyTorch峰值962.80MiB，脚本计时5.46秒。小型记录`experiments/pusht/act_deployment_20261119/summary.json`，复现与局限见[部署对照说明](docs/pusht/ACT_DEPLOYMENT_CHECK.md)。本轮未安装依赖、改上游或Lift代码，未commit、push或发布。
+
+下一步是冻结实际模型服务精度及动作配置，随后在用户授权下接通真实模型WebSocket→EvalEnv单动作，再扩展短闭环；尚未验证时间集成/多次取动作、初态恢复、物理动作或正式成功率。
+
+## 最新结果：20次更新诊断训练与checkpoint重载通过（2026-11-19）
+
+用户明确授权执行短训练。主代理复用已有环境（pip check通过）和提交`6538def`的脚本，未修改源码，运行前确认物理GPU3完整UUID、1MiB/0%，脚本内部再次守卫。命令为`python scripts/pusht/train/train_act_smoke.py --gpu-uuid <GPU_UUID> --output outputs/pusht/act_smoke_20261119_v1 --updates 20 --val-every 10`。实际GPU UUID记录在冻结参数/结果与设备快照，其他GPU上的用户进程未操作。
+
+- 训练episode0、统计量仅episode0，episode1是流程诊断验证；两条均属于正式训练池。固定训练/验证各4个位置，验证种子1000，每10次更新检查，batch1、chunk50、三路640×480、hidden512、KL10、有效动作元素平均L1、梯度裁剪1、无AMP。
+- `outputs/pusht/act_smoke_20261119_v1/result.json` ok:true，进程退出码0；metrics核对训练1—20连续无缺失，固定评估在0/10/20完成，所有记录损失/梯度范数有限。固定训练总损失80.14254→17.15081、L1 0.85653→0.79829；诊断验证总损失100.66808→66.99278，但L1 9.41976→9.46229略升，总损失下降主要来自KL。最佳总损失选在update20，不代表最佳动作L1或闭环成功。
+- 保存policy_best.ckpt、policy_last.ckpt、dataset_stats.pkl，实际重新实例化模型加载last并推理，(1,50,14)输出与保存前最大差0；统计量重载逐值一致。last SHA256=`a00e0b85b1c054f5ac7bdc254263e754503d0a04bfea84cfde32eddb1b0cb726`。PyTorch峰值分配1782.00MiB，脚本报告10.85秒；这是张量分配峰值，不是总GPU显存。结束后GPU3回到1MiB/0%。
+- 冻结parameters.yaml、源码、数据/源码校验值、runtime.log、metrics.jsonl、process-status.json、GPU前后快照均留在独立输出目录。小型记录`experiments/pusht/act_smoke_20261119/summary.json`；原始数据、完整日志和模型不进入普通Git。本轮新增记录与文档未commit、push或发布。
+
+下一步应先复核真实模型部署的反归一化、动作解释、初态恢复及短闭环接口，再准备正式训练预算/验证协议；短诊断不能证明模型收敛或泛化，不直接扩大训练步数来替代验收。valid20、heldout20和正式闭环成功率均未运行。下方“短训练未执行”保留当时阶段边界。
 
 ## 本次提交与验证（2026-11-19）
 
