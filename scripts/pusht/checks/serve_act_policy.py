@@ -1,4 +1,4 @@
-"""仅监听本机回环地址的真实ACT单动作诊断服务。"""
+"""仅监听本机回环地址的真实ACT有界回合诊断服务。"""
 import argparse
 import asyncio
 import hashlib
@@ -24,6 +24,8 @@ def digest(path):
 
 
 def main(args):
+    if not 1 <= args.max_actions <= 51:
+        raise ValueError('max-actions must be between 1 and 51')
     args.output = args.output.resolve()
     args.checkpoint_dir = args.checkpoint_dir.resolve()
     args.output.mkdir(parents=True, exist_ok=False)
@@ -40,7 +42,8 @@ def main(args):
     from client_server.ws.model_server import PolicyServer, PolicyServerConfig
     from XPolicyLab.policy.ACT.model import Model
 
-    result = {'ok': False, 'scope': 'real ACT WebSocket server; at most one action request',
+    result = {'ok': False, 'scope': 'real ACT bounded WebSocket diagnostic', 'max_actions': args.max_actions,
+              'forward_events': [],
               'resets': 0, 'observation_updates': 0, 'action_requests': 0}
     started = time.perf_counter()
     try:
@@ -53,7 +56,7 @@ def main(args):
                       env_cfg_type='arx_x5', action_type='joint', action_dim=14)
         protocol = {'checkpoint_sha256': digest(checkpoint),
                     'stats_sha256': digest(args.checkpoint_dir / 'dataset_stats.pkl'),
-                    'model': config, 'gpu_uuid': args.gpu_uuid, 'cudnn_allow_tf32': False,
+                    'max_actions': args.max_actions, 'model': config, 'gpu_uuid': args.gpu_uuid, 'cudnn_allow_tf32': False,
                     'matmul_allow_tf32': False, 'python': sys.version, 'torch': str(torch.__version__),
                     'torchvision': str(torchvision.__version__), 'websockets': websockets.__version__,
                     'xpolicylab_head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=UPSTREAM, text=True).strip()}
@@ -78,6 +81,24 @@ def main(args):
         torch.cuda.reset_peak_memory_stats()
         model = Model(config)
 
+        def save_event(filename, row):
+            with (args.output / filename).open('a') as file:
+                file.write(json.dumps(row) + '\n')
+
+        def on_forward(module, inputs):
+            qpos, image = inputs[:2]
+            row = {'request_index': result['action_requests'] + 1,
+                   'model_t': model.model.t,
+                   'observation_sequence': result['observation_updates'],
+                   'qpos_sha256': hashlib.sha256(qpos.detach().cpu().numpy().tobytes()).hexdigest(),
+                   'image_sha256': hashlib.sha256(image.detach().cpu().numpy().tobytes()).hexdigest(),
+                   'qpos_shape': list(qpos.shape), 'image_shape': list(image.shape)}
+            result['forward_events'].append(row)
+            save_event('forward_events.jsonl', row)
+
+        # ACTPolicy覆写了__call__，因此在其内部实际DETRVAE模块上记录前向。
+        model.model.policy.model.register_forward_pre_hook(on_forward)
+
         class RecordedPolicy:
             def reset(self):
                 result['resets'] += 1
@@ -94,22 +115,44 @@ def main(args):
                     arrays[name] = image
                 result['received_cameras'] = cameras
                 result['received_state'] = {key: np.asarray(value).tolist() for key, value in obs['state'].items()}
-                np.savez_compressed(args.output / 'received_observation.npz', **arrays)
                 result['observation_updates'] += 1
+                sequence = result['observation_updates']
+                save_event('observation_events.jsonl', {
+                    'sequence': sequence, 'cameras': cameras, 'state': result['received_state']})
+                if sequence == 1:
+                    np.savez_compressed(args.output / 'received_observation.npz', **arrays)
+                elif (sequence - 1) % config['chunk_size'] == 0:
+                    np.savez_compressed(args.output / f'received_observation_{sequence:04d}.npz', **arrays)
                 model.update_obs(obs)
 
             def get_action(self):
-                if result['action_requests'] != 0:
-                    raise RuntimeError('single-action diagnostic refuses a second inference')
+                if result['action_requests'] >= args.max_actions:
+                    raise RuntimeError('bounded diagnostic action limit reached')
+                t_before = model.model.t
+                forwards_before = len(result['forward_events'])
                 start = time.perf_counter()
                 actions = model.get_action()
                 torch.cuda.synchronize()
                 assert len(actions) == 1
                 result['actions'] = [{key: np.asarray(value).tolist() for key, value in action.items()} for action in actions]
+                slot = t_before % config['chunk_size']
+                expected = model.model.all_actions[0, slot].detach().cpu().numpy()
+                expected = expected * model.model.stats['action_std'] + model.model.stats['action_mean']
+                packed = np.concatenate([np.asarray(actions[0][key]) for key in (
+                    'left_arm_joint_state', 'left_ee_joint_state', 'right_arm_joint_state', 'right_ee_joint_state')])
+                assert np.array_equal(expected, packed), 'returned action does not match cached slot'
+                fresh = len(result['forward_events']) - forwards_before
+                assert fresh == int(slot == 0), 'unexpected actual model forward count'
                 result['action_requests'] += 1
                 result['inference_seconds'] = time.perf_counter() - start
+                row = {'request_index': result['action_requests'], 'model_t_before': t_before,
+                       'cached_slot': slot, 'actual_forwards_this_request': fresh,
+                       'observation_sequence': result['observation_updates'],
+                       'actions': result['actions'], 'cache_action_max_abs_error': float(np.max(np.abs(expected-packed))),
+                       'seconds': result['inference_seconds']}
+                save_event('action_events.jsonl', row)
                 (args.output / 'prediction.json').write_text(json.dumps(result['actions'], indent=2) + '\n')
-                print('ACTION_SERVED', flush=True)
+                print('ACTION_SERVED', result['action_requests'], 'slot', slot, 'forwards', fresh, flush=True)
                 return actions
 
         async def serve():
@@ -127,7 +170,8 @@ def main(args):
                 await server.stop()
 
         asyncio.run(serve())
-        result['ok'] = result['resets'] == result['observation_updates'] == result['action_requests'] == 1
+        result['ok'] = (result['resets'] == 1 and result['observation_updates'] == result['action_requests'] == args.max_actions
+                        and [e['request_index'] for e in result['forward_events']] == list(range(1, args.max_actions + 1, config['chunk_size'])))
         result['peak_allocated_mib'] = torch.cuda.max_memory_allocated() / 1024**2
     except BaseException as exc:
         result['error'] = repr(exc)
@@ -144,4 +188,5 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint-dir', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--gpu-uuid', required=True)
+    parser.add_argument('--max-actions', type=int, default=1)
     raise SystemExit(main(parser.parse_args()))

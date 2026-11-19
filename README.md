@@ -101,7 +101,7 @@ for episode_id, (state, action) in load_joint_episodes(base, [0, 1]).items():
 PY
 ```
 
-真实ACT策略与仿真的单动作检查使用 `scripts/pusht/checks/serve_act_policy.py` 和 `scripts/pusht/checks/check_act_eval_link.py`。两个独立环境、空闲GPU选择和退出要求见 [真实模型单动作联通](docs/pusht/ACT_EVAL_LINK.md)。
+真实ACT策略与仿真的单动作及有界短回合检查使用 `scripts/pusht/checks/serve_act_policy.py` 和 `scripts/pusht/checks/check_act_eval_link.py`。两端默认只执行一次动作；跨50步动作块检查分别使用服务端`--max-actions 51`、仿真端`--steps 51`。两个独立环境、空闲GPU选择和退出要求见 [真实模型联通与短回合](docs/pusht/ACT_EVAL_LINK.md)。
 
 训练产物可用 `scripts/pusht/checks/check_act_deployment.py` 做项目推理与真实XPolicyLab适配器的离线数值对照；它显式禁用TF32并关闭时间集成，环境精度和误差边界见 [部署对照说明](docs/pusht/ACT_DEPLOYMENT_CHECK.md)。
 

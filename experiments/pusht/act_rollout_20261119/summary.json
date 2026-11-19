@@ -1,0 +1,87 @@
+{
+  "ok": true,
+  "audit_note": "Post-run CPU audit; corrected event field name without rerunning GPU processes",
+  "planned_actions": 51,
+  "completed_actions": 51,
+  "actual_model_forwards": 2,
+  "forward_request_indices": [
+    1,
+    51
+  ],
+  "observation_bytes_equal": true,
+  "action_values_equal": true,
+  "physical_steps": 510,
+  "simulated_seconds": 2.04,
+  "t_translation_m": 0.0,
+  "termination_reason": "action_budget",
+  "native_end_flag": false,
+  "native_success_flag": true,
+  "native_task_success": false,
+  "clipped_gripper_values": 1,
+  "video": {
+    "programs": [],
+    "streams": [
+      {
+        "avg_frame_rate": "25/1",
+        "duration": "2.080000",
+        "nb_frames": "52"
+      }
+    ]
+  },
+  "policy_peak_allocated_mib": 641.94921875,
+  "evidence_dir": "outputs/pusht/checks/act_rollout_20261119_v2",
+  "source_head": "b2b90417ab4f5d950848af360a940b7a8ad77df2",
+  "checkpoint_sha256": "a00e0b85b1c054f5ac7bdc254263e754503d0a04bfea84cfde32eddb1b0cb726",
+  "stats_sha256": "7332e72e3c8e3bbca408a276940adfac7928dbe1d4d84a2ed3ec16e8032f007b",
+  "layout_sha256": "5d6c4c37b2715479cb6a16f6d1200c5de740f1fbbaa216640b3b8828295f0b07",
+  "reward_conditions": {
+    "checks": 1,
+    "queries": 1
+  },
+  "cache_action_max_abs_error": 0.0,
+  "clipping_events": [
+    {
+      "action_index": 37,
+      "field": "right_ee_joint_state",
+      "raw": -0.001069881021976471,
+      "clipped_0_1": 0.0,
+      "was_clipped": true,
+      "expected_primary_m": -0.01,
+      "actual_native_primary_target_m": -0.01
+    }
+  ],
+  "gpu_after": {
+    "sim": {
+      "index": 3,
+      "memory_mib": 2,
+      "utilization_percent": 0
+    },
+    "policy": {
+      "index": 6,
+      "memory_mib": 2,
+      "utilization_percent": 0
+    }
+  },
+  "source_sha256": {
+    "scripts/pusht/checks/check_act_eval_link.py": "82dc6fcbf1f6da7a2af975a4bf36490a92ecf4cdd8a584c71e0d836b09db5886",
+    "scripts/pusht/checks/serve_act_policy.py": "3a3fb522fdcde18764efa6274dc2c5efb4a9ccb371253bab5ad82a42231acadf"
+  },
+  "process_status": {
+    "client_returncode": 0,
+    "server_returncode": 0
+  },
+  "initial_failed_attempt": {
+    "evidence_dir": "outputs/pusht/checks/act_rollout_20261119_v1",
+    "ok": false,
+    "planned_actions": 51,
+    "completed_actions": 0,
+    "cause": "Missing native run_reward registration; empty reward checks incorrectly terminated before action 1. Corrected in v2."
+  },
+  "limitations": [
+    "20-update diagnostic model; not a task success-rate evaluation",
+    "Native success flag is initialized true; task success requires native_end_flag and native_success_flag",
+    "No contact-force capture or demonstration initial-state restoration",
+    "Two genuine network forwards; 49 cached actions between them",
+    "Video includes initial frame: 52/25=2.08s playback, physical action time=2.04s"
+  ]
+}
